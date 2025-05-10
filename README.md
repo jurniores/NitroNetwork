@@ -157,4 +157,34 @@ You can retrieve the default room using:
 
 ```csharp
 NitroRoom defaultRoom = NitroManager.GetFirstRoom();
+```
+## 🧩 NitroIdentity: Core of Networked Objects
+
+`NitroIdentity` is the key component responsible for synchronizing objects over the network.  
+It determines how the object is spawned, who owns it, and in which room it's visible.
+
+---
+
+### 🧱 Static vs Dynamic Identities
+
+Every identity can be either **static** or **dynamic**:
+
+| Property           | Static (`IsStatic = true`)                  | Dynamic (`IsStatic = false`)                      |
+|-------------------|---------------------------------------------|--------------------------------------------------|
+| Lives in scene?   | Yes, predefined in the scene                | No, instantiated at runtime                      |
+| Has connection?   | ❌ No fixed connection                       | ✅ Bound to a connection via `conn`              |
+| Spawning?         | Already exists; no spawn required           | Spawned via `Spawn()` method                     |
+| Ownership         | Shared across all peers                     | Owned by a specific peer                         |
+| Destroy   | Destroys on the server and in the room it belongs to   | Triggered via the `Destroy()` method        |
+
+
+
+You can check whether an identity is static via:
+
+```csharp
+if (identity.IsStatic)
+{
+    // Handle static logic
+}
+```
 
