@@ -20,21 +20,12 @@ This script demonstrates how to automatically connect a client to the server whe
 ```csharp
 using UnityEngine;
 
-// Requires the NitroStatic component so this object is always present in the scene across all peers.
 [RequireComponent(typeof(NitroStatic))]
 public partial class ConnectPeers : NitroBehaviour
 {
-    // Called once before the first Update() after the object is initialized.
-    // Automatically tries to connect to the server when the scene starts.
     void Start()
     {
         CallConnectToServer(); // This will send an RPC to the server.
-    }
-
-    // Called every frame. Not used in this example.
-    void Update()
-    {
-        
     }
 
     // RPC method that will be executed on the server when called by a client.
@@ -42,6 +33,11 @@ public partial class ConnectPeers : NitroBehaviour
     void ConnectToServer()
     {
         Debug.Log("ConnectToServer");
-        // Handle player registration or initialization here.
+        CallConnectToClient();
+    }
+    [NitroRPC(NitroType.Client)]
+    void ConnectToClient()
+    {
+        Debug.Log("Hello Client");
     }
 }
