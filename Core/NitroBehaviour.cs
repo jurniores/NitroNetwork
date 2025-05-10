@@ -11,7 +11,7 @@ public class NitroBehaviour : MonoBehaviour
     protected NitroBuffer __buffer = new();
     protected int __tamRpcS = 0, __tamRpcC = 0;
 
-    public void SetConfigs(NitroIdentity identity, bool isServer, bool isClient, bool isMine)
+    internal void SetConfigs(NitroIdentity identity, bool isServer, bool isClient, bool isMine)
     {
         this.Identity = identity;
         IsStatic = identity.IsStatic;

@@ -16,7 +16,8 @@ public class NitroIdentity : MonoBehaviour
 
     private string namePrefab; // Name of the prefab associated with this identity
     public ushort Id; // Unique identifier for this identity
-    public bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
+    [SerializeField]
+    private bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
 
     // Connections associated with this identity
     public NitroConn conn, callConn;
@@ -99,7 +100,7 @@ public class NitroIdentity : MonoBehaviour
     /// <param name="room">The room where the identity will be spawned.</param>
     /// <param name="target">The target audience for the spawn.</param>
     /// <returns>The newly spawned NitroIdentity.</returns>
-    public NitroIdentity Spawn(NitroConn conn, NitroRoom room = null, Target target = Target.All)
+    public NitroIdentity Spawn(NitroConn conn, NitroRoom room = null)
     {
         var newRoom = room ?? NitroManager.GetFirstRoom(); // Gets the room if not specified
 
@@ -126,7 +127,7 @@ public class NitroIdentity : MonoBehaviour
 
         newIdentity.SetConfig();
         newRoom.SetIdentity(newIdentity);
-        SendSpawnForClient(conn, target, room: newRoom);
+        SendSpawnForClient(conn, Target.All, room: newRoom);
         newIdentity.gameObject.SetActive(true);
         return newIdentity;
     }

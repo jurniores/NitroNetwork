@@ -10,7 +10,7 @@ public class NitroConn
    
     //public Action<Span<byte>, DeliveryMode, byte> Send; // Delegate for sending data through this connection
     public Dictionary<string, NitroRoom> rooms = new(); // Dictionary of rooms associated with this connection
-    public Dictionary<int, NitroIdentity> identitiesOnDestroy = new(); // Dictionary of identities to be destroyed when the connection is terminated
+    internal Dictionary<int, NitroIdentity> identitiesOnDestroy = new(); // Dictionary of identities to be destroyed when the connection is terminated
 
     /// <summary>
     /// Adds an identity to the list of identities associated with this connection.

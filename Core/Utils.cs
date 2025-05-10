@@ -1,18 +1,4 @@
 using UnityEngine;
-public static class Utils
-{
-
-    public static string GetTypeName(object obj)
-    {
-        return obj.GetType().Name;
-    }
-
-    public static void Spawn2(this NitroIdentity identity, NitroConn conn)
-    {
-        
-    }
-  
-}
 
 public enum DeliveryMode : byte
 {

@@ -52,7 +52,6 @@ public class NitroRoom
         }
         return false;
     }
-
     public bool AddIdentity(NitroIdentity identity)
     {
         if (identities.TryAdd(identity.Id, identity))
@@ -70,14 +69,14 @@ public class NitroRoom
         return false;
     }
 
-    public void SpawnIdentity(NitroIdentity identity, NitroConn conn)
+    internal void SpawnIdentity(NitroIdentity identity, NitroConn conn)
     {
         if (identities.TryGetValue(identity.Id, out NitroIdentity nitroIdentity))
         {
             nitroIdentity.SendSpawnForClient(conn, room: this);
         }
     }
-    public void DestroyAllIdentities()
+    internal void DestroyAllIdentities()
     {
 
         foreach (var identity in identities)

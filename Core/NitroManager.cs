@@ -151,35 +151,10 @@ public class NitroManager : MonoBehaviour
     /// <summary>
     /// Sets the server and client flags for a NitroIdentity.
     /// </summary>
-    public static void IsServerAndClient(ref bool isServer, ref bool isClient, NitroIdentity identity)
+    internal static void IsServerAndClient(ref bool isServer, ref bool isClient, NitroIdentity identity)
     {
         isServer = Instance.IsServer;
         isClient = Instance.IsClient;
-    }
-    /// <summary>
-    /// Reflects and registers RPC methods for a NitroIdentity.
-    /// </summary>
-    void ReflectGetRPCs(NitroIdentity identity)
-    {
-        var behaviours = identity.GetComponentsInChildren<NitroBehaviour>(true);
-
-        foreach (var behaviour in behaviours)
-        {
-            var type = behaviour.GetType();
-            MethodInfo[] methodInfos = type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            for (int i = 0; i < methodInfos.Length; i++)
-            {
-                MethodInfo method = methodInfos[i];
-                var attr = method.GetCustomAttribute<NitroRPC>(inherit: false);
-                if (attr == null || !method.Name.StartsWith("_"))
-                {
-                    continue;
-                }
-                var action = (Action<NitroBuffer>)Delegate.CreateDelegate(typeof(Action<NitroBuffer>), behaviour, method);
-
-                // RegisterRPC(action, attr.type, identity);
-            }
-        }
     }
 
     /// <summary>
@@ -226,7 +201,7 @@ public class NitroManager : MonoBehaviour
     /// <summary>
     /// Registers a NitroIdentity with the manager.
     /// </summary>
-    public static void RegisterIdentity(NitroIdentity identity, bool IsServer = true, bool IsStatic = false)
+    internal static void RegisterIdentity(NitroIdentity identity, bool IsServer = true, bool IsStatic = false)
     {
         if (IsStatic)
         {
@@ -259,7 +234,7 @@ public class NitroManager : MonoBehaviour
     /// <summary>
     /// Unregisters a NitroIdentity from the manager.
     /// </summary>
-    public static void UnRegisterIdentity(NitroIdentity identity, bool IsServer = true, bool IsStatic = false)
+    internal static void UnRegisterIdentity(NitroIdentity identity, bool IsServer = true, bool IsStatic = false)
     {
         if (IsStatic)
         {
