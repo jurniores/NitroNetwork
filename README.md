@@ -42,6 +42,105 @@ public partial class ConnectPeers : NitroBehaviour
     }
 }
 ```
+## 🧠 NitroBehaviour: Enabling RPC and Network Logic
+
+All networked scripts in **NitroNetwork** must inherit from `NitroBehaviour`.  
+To enable Nitro's code generation and RPC binding, **your class must also be declared as `partial`**.
+
+> ⚠️ If you forget to mark your class as `partial`, RPCs will **not work**.
+
+---
+
+### 🏗️ Basic Setup
+
+- Inherit from `NitroBehaviour`
+- Mark your class as `partial`
+- Attach a `NitroIdentity` (or `NitroStatic`) to the parent GameObject
+- ## 🔎 Role Detection with NitroBehaviour
+
+When your script inherits from `NitroBehaviour`, you gain access to key role-checking properties. These are essential to safely structure logic that runs only on the server, client, or when the object belongs to the current player.
+
+| Property     | Type    | Used On   | Description                                                                 |
+|--------------|---------|-----------|-----------------------------------------------------------------------------|
+| `IsMine`     | `bool`  | Client    | `true` if this identity belongs to the local client (i.e. the local player) |
+| `IsClient`   | `bool`  | Client    | `true` when the script is running on any client (not necessarily owner)     |
+| `IsServer`   | `bool`  | Server    | `true` when running on the server                                           |
+
+These flags are safe to use anywhere inside your `NitroBehaviour` class to control RPC logic and authority.
+
+### ✅ Usage Example
+
+```csharp
+public partial class MyNetworkScript : NitroBehaviour
+{
+    void Update()
+    {
+        if (IsMine)
+        {
+            // Only the owning client can execute this block
+        }
+    
+        if (IsClient)
+        {
+            // Executes on all clients (owners or not)
+        }
+    
+        if (IsServer)
+        {
+            // Executes only on the server
+        }
+    }
+}
+
+
+```
+## 📡 Remote Procedure Calls (RPC) in NitroNetwork
+
+In **NitroNetwork**, you can create network-executable methods using the `[NitroRPC]` attribute.  
+These methods must be declared inside a `partial` class that inherits from `NitroBehaviour`.
+
+---
+
+### 🧪 Example RPC Declaration
+
+```csharp
+void Start()
+{
+    // Logic to trigger RPCs
+}
+
+[NitroRPC(NitroType.Server)]
+void MethodOfServer()
+{
+    print("Hello Server");
+}
+
+[NitroRPC(NitroType.Client)]
+void MethodOfClient()
+{
+    Debug.Log("Hello Client");
+}
+```
+
+### ☎️ Calling RPCs (Always Use `Call` Prefix)
+
+```csharp
+if (IsClient || IsMine)
+{
+    CallMethodOfServer(); // Client → Server
+}
+
+if (IsServer)
+{
+    CallMethodOfClient(); // Server → Client
+}
+```
+
+> ⚠️ Always use the `Call` prefix. Never invoke the method directly.
+
+⚠️ Static Variable Warning
+A note: always be careful with static variables, as they are not bound to any specific connection and can cause silent errors. Make sure you're always calling the method from the opposite network context (e.g., client calling a server method, and vice versa).
+
 ## 🧱 Spawning Networked Objects
 
 In **NitroNetwork**, to spawn an object over the network, you must:
