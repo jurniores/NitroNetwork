@@ -54,9 +54,9 @@ In **NitroNetwork**, to spawn an object over the network, you must:
 
 ### ✅ Requirements
 
-- Your prefab must be registered via `NitroManager.RegisterPrefab()`.
+- Your prefab must be registered via `NitroManager`.
 - The prefab must contain a `NitroIdentity` component.
-- To spawn the object for a specific client, pass `Identity.conn` as the owner.
+- To spawn the object for a specific client, pass `Identity.callConn` as the owner.
 
 ---
 
@@ -83,14 +83,8 @@ public partial class ConnectPeers : NitroBehaviour
     [NitroRPC(NitroType.Server)]
     void SpawnServer()
     {
-        // Get the registered player prefab by name
         var prefab = NitroManager.GetPrefab("Player");
-
-        // Spawn the object and assign it to this client's connection
-        NitroIdentity identity = prefab.Spawn(Identity.conn);
-
-        // Optional: spawn in a specific room
-        // NitroIdentity identity = prefab.Spawn(Identity.conn, "room-1");
+        NitroIdentity identity = prefab.Spawn(Identity.callConn);
     }
 
     /// <summary>
