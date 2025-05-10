@@ -102,4 +102,65 @@ public partial class ConnectPeers : NitroBehaviour
         Debug.Log("Hello Client");
     }
 }
+```
+## 🏠 Dynamic Room Assignment with `NitroRoom.AddIdentity`
+
+In **NitroNetwork**, you are not required to assign a room at the moment of spawning.  
+You can dynamically assign a network identity to a room later using the `NitroRoom.AddIdentity()` method.
+
+This is useful for:
+- Moving players between lobbies and matches.
+- Dynamically organizing instances by region, game mode, etc.
+- Deferring room logic until after initialization.
+
+---
+
+### 🧪 Example: Assigning an Identity to a Room After Spawn
+
+```csharp
+using UnityEngine;
+
+[RequireComponent(typeof(NitroIdentity))]
+[RequireComponent(typeof(NitroStatic))]
+public partial class ConnectPeers : NitroBehaviour
+{
+    NitroIdentity nitroIdentity;
+
+    void Start()
+    {
+        // Create or fetch a room with the given ID
+        NitroRoom nitroRoom = NitroManager.CreateRoom("RoomTest");
+
+        // Add this identity to the room so it becomes visible to all peers in that room
+        nitroRoom.AddIdentity(nitroIdentity);
+    }
+}
+```
+## 🧭 Room Lifecycle & Default Room Behavior
+
+In **NitroNetwork**, rooms (instances of `NitroRoom`) are responsible for organizing which peers can see which identities. Nitro uses a **room-based architecture**, meaning objects only exist for the clients that are "listening" to a specific room.
+
+---
+
+### 🏗️ Creating a Room That Persists
+
+By default, rooms are automatically destroyed when they no longer have any connected clients.  
+If you want to **keep a room alive permanently**, pass `false` as the second parameter:
+
+```csharp
+// This room will not be destroyed automatically
+NitroRoom nitroRoom = NitroManager.CreateRoom("RoomTest", false);
+````
+### ⚠️ Important: Identity Transitions Between Rooms
+
+When you assign a `NitroIdentity` to a room using `AddIdentity(identity)`:
+
+- ✅ It will be **spawned** (i.e., become visible and synchronized) for all clients that are currently in the **target room**.
+- ❌ It will be **destroyed** (unspawned) for all clients that were in the **previous room**.
+- 🌀 If the identity was not part of any room before, it is automatically assigned to the **default universal room**.
+
+You can retrieve the default room using:
+
+```csharp
+NitroRoom defaultRoom = NitroManager.GetFirstRoom();
 
