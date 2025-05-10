@@ -286,4 +286,29 @@ if (identity.IsStatic)
     // Handle static logic
 }
 ```
+## 🧭 Manual Room Control with `NitroRoom`
+
+The `NitroRoom` API provides fine-grained control over connection membership, identity visibility, and room lifecycle.
+
+Below is a complete example with line-by-line explanation:
+
+```csharp
+NitroRoom nitroRoom = NitroManager.CreateRoom("RoomTest");
+
+// Instantiates all identities currently in the room 
+// and subscribes to all events sent by those identities
+nitroRoom.JoinRoom(Identity.callConn);
+
+// Adds a network identity to the room and automatically spawns it 
+// for all connections currently listening to this room
+nitroRoom.AddIdentity(Identity);
+
+// Configures whether the room should be auto-destroyed 
+// when there are no more active connections in it
+nitroRoom.autoDestroy = false;
+
+// Removes the specified connection from the room,
+// and destroys all identities (from that room) for that connection
+nitroRoom.LeaveRoom(Identity.callConn);
+```
 
