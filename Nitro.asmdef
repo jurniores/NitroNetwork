@@ -1,0 +1,16 @@
+{
+    "name": "Nitro",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fbc24e759e6340c479a4babd3393925a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
