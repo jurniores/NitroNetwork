@@ -136,7 +136,7 @@ public class NitroManager : MonoBehaviour
         Instance.transporter.DisconnectServer();
         Instance.transporter.DisconnectClient();
     }
-    public static void DisconnectClient(NitroConn conn)
+    public static void DisconnectConn(NitroConn conn)
     {
         Instance.transporter.DisconnectPeer(conn.Id);
     }
