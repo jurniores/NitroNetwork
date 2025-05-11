@@ -3,76 +3,79 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 
-public class NitroConn
+namespace NitroNetwork.Core
 {
-    public int Id; // Unique identifier for the connection
-    public IPEndPoint iPEndPoint; // IP endpoint associated with this connection
-   
-    //public Action<Span<byte>, DeliveryMode, byte> Send; // Delegate for sending data through this connection
-    public Dictionary<string, NitroRoom> rooms = new(); // Dictionary of rooms associated with this connection
-    internal Dictionary<int, NitroIdentity> identitiesOnDestroy = new(); // Dictionary of identities to be destroyed when the connection is terminated
-
-    /// <summary>
-    /// Adds an identity to the list of identities associated with this connection.
-    /// </summary>
-    /// <param name="identity">The identity to add.</param>
-    public void AddIdentity(NitroIdentity identity)
+    public class NitroConn
     {
-        identitiesOnDestroy.Add(identity.Id, identity);
-    }
+        public int Id; // Unique identifier for the connection
+        public IPEndPoint iPEndPoint; // IP endpoint associated with this connection
 
-    /// <summary>
-    /// Adds a room to the list of rooms associated with this connection.
-    /// </summary>
-    /// <param name="room">The room to add.</param>
-    /// <returns>True if the room was successfully added; otherwise, false.</returns>
-    internal bool AddRoom(NitroRoom room)
-    {
-        if (rooms.TryAdd(room.Name, room))
+        //public Action<Span<byte>, DeliveryMode, byte> Send; // Delegate for sending data through this connection
+        public Dictionary<string, NitroRoom> rooms = new(); // Dictionary of rooms associated with this connection
+        internal Dictionary<int, NitroIdentity> identitiesOnDestroy = new(); // Dictionary of identities to be destroyed when the connection is terminated
+
+        /// <summary>
+        /// Adds an identity to the list of identities associated with this connection.
+        /// </summary>
+        /// <param name="identity">The identity to add.</param>
+        public void AddIdentity(NitroIdentity identity)
         {
-            UnityEngine.Debug.Log($"Room added: {room.Name} to peer {Id}");
-            return true;
+            identitiesOnDestroy.Add(identity.Id, identity);
         }
-        return false;
-    }
 
-    /// <summary>
-    /// Removes all rooms associated with this connection.
-    /// </summary>
-    internal void LeaveAllRooms()
-    {
-        for (int i = rooms.Values.Count - 1; i >= 0; i--)
+        /// <summary>
+        /// Adds a room to the list of rooms associated with this connection.
+        /// </summary>
+        /// <param name="room">The room to add.</param>
+        /// <returns>True if the room was successfully added; otherwise, false.</returns>
+        internal bool AddRoom(NitroRoom room)
         {
-            var room = new List<NitroRoom>(rooms.Values)[i];
-            room.LeaveRoom(this);
+            if (rooms.TryAdd(room.Name, room))
+            {
+                UnityEngine.Debug.Log($"Room added: {room.Name} to peer {Id}");
+                return true;
+            }
+            return false;
         }
-        rooms.Clear();
-    }
 
-    /// <summary>
-    /// Removes a specific room from the list of rooms associated with this connection.
-    /// </summary>
-    /// <param name="room">The room to remove.</param>
-    /// <returns>True if the room was successfully removed; otherwise, false.</returns>
-    internal bool RemoveRoom(NitroRoom room)
-    {
-        if (rooms.Remove(room.Name))
+        /// <summary>
+        /// Removes all rooms associated with this connection.
+        /// </summary>
+        internal void LeaveAllRooms()
         {
-            return true;
+            for (int i = rooms.Values.Count - 1; i >= 0; i--)
+            {
+                var room = new List<NitroRoom>(rooms.Values)[i];
+                room.LeaveRoom(this);
+            }
+            rooms.Clear();
         }
-        UnityEngine.Debug.LogWarning($"Failed to remove room {room.Name} from peer {Id}");
-        return false;
-    }
 
-    /// <summary>
-    /// Destroys all identities associated with this connection.
-    /// </summary>
-    internal void DestroyAllIdentities()
-    {
-        foreach (var identity in identitiesOnDestroy)
+        /// <summary>
+        /// Removes a specific room from the list of rooms associated with this connection.
+        /// </summary>
+        /// <param name="room">The room to remove.</param>
+        /// <returns>True if the room was successfully removed; otherwise, false.</returns>
+        internal bool RemoveRoom(NitroRoom room)
         {
-            identity.Value.Destroy();
+            if (rooms.Remove(room.Name))
+            {
+                return true;
+            }
+            UnityEngine.Debug.LogWarning($"Failed to remove room {room.Name} from peer {Id}");
+            return false;
         }
-        identitiesOnDestroy.Clear();
+
+        /// <summary>
+        /// Destroys all identities associated with this connection.
+        /// </summary>
+        internal void DestroyAllIdentities()
+        {
+            foreach (var identity in identitiesOnDestroy)
+            {
+                identity.Value.Destroy();
+            }
+            identitiesOnDestroy.Clear();
+        }
     }
 }

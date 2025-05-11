@@ -1,4 +1,5 @@
 using System;
+using NitroNetwork.Core;
 
 
 public interface Transporter

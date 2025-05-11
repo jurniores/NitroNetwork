@@ -1,15 +1,17 @@
 using UnityEngine;
-
-[DefaultExecutionOrder(-101)]
-public class NitroStatic : MonoBehaviour
+namespace NitroNetwork.Core
 {
-    void Awake()
+    [DefaultExecutionOrder(-101)]
+    public class NitroStatic : MonoBehaviour
     {
-        var identity = GetComponent<NitroIdentity>();
-        if(identity != null)
+        void Awake()
         {
-            identity.IsStatic = true;
-            return;
+            var identity = GetComponent<NitroIdentity>();
+            if (identity != null)
+            {
+                identity.IsStatic = true;
+                return;
+            }
         }
     }
 }
