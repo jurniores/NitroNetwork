@@ -121,6 +121,49 @@ void MethodOfClient()
     Debug.Log("Hello Client");
 }
 ```
+## 📡 NitroRPC Attribute
+
+The `[NitroRPC]` attribute is used to define methods that can be executed remotely over the network. These methods allow communication between the server and clients in **NitroNetwork**.
+
+### 🔧 NitroRPC Attribute Parameters
+
+| Parameter       | Type            | Default Value             | Description                                                                 |
+|-----------------|-----------------|---------------------------|-----------------------------------------------------------------------------|
+| `type`          | `NitroType`     | **Required**              | Specifies whether the RPC is for the `Server` or `Client`.                  |
+| `requiresOwner` | `bool`          | `true`                    | Indicates if the caller must own the object to invoke the RPC.              |
+| `target`        | `Target`        | `Target.All`              | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). Only for Client RPCs. |
+| `deliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered` | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).      |
+| `channel`       | `int`           | `0`                       | Specifies the communication channel for the RPC.                            |
+
+---
+
+### 🧪 Example: Using NitroRPC
+
+```csharp
+public partial class MyNetworkScript : NitroBehaviour
+{
+    void Start()
+    {
+        // Trigger an RPC call to the server
+        CallServerMethod();
+    }
+
+    // Server-side RPC
+    [NitroRPC(NitroType.Server, requiresOwner = true)]
+    void ServerMethod()
+    {
+        Debug.Log("This method runs on the server.");
+        CallClientMethod(); // Call a client RPC from the server
+    }
+
+    // Client-side RPC
+    [NitroRPC(NitroType.Client, target = Target.AllExceptSelf, deliveryMode = DeliveryMode.Sequenced)]
+    void ClientMethod()
+    {
+        Debug.Log("This method runs on all clients except the caller.");
+    }
+}
+```
 
 ### ☎️ Calling RPCs (Always Use `Call` Prefix)
 
