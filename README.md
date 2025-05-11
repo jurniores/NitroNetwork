@@ -354,7 +354,7 @@ NitroManager.ConnectServer(7777);
 NitroManager.Disconnect();
 
 // Disconnects a specific client by its connection object
-NitroManager.DisconnectClient(Identity.conn);
+NitroManager.DisconnectConn(Identity.conn);
 
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
