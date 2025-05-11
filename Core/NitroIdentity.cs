@@ -22,9 +22,6 @@ namespace NitroNetwork.Core
 
         public NitroRoom room; // Room associated with this identity
 
-        [SerializeField]
-        private List<string> listClien = new(), listServer = new(); // Lists for storing RPC information
-
         // Dictionaries for storing server and client RPCs
         internal Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
 
@@ -41,16 +38,7 @@ namespace NitroNetwork.Core
                 if (IsClient || IsStatic) nb.__RegisterMyRpcClient(RpcClient);
             }
 
-            // Adds registered RPCs to lists for debugging
-            foreach (var rpc in RpcServer)
-            {
-                listServer.Add($"Key {rpc.Key} value {rpc.Value.Method.Name}");
-            }
-            foreach (var rpc in RpcClient)
-            {
-                listClien.Add($"Key {rpc.Key} value {rpc.Value.Method.Name}");
-            }
-
+           
             // If the identity is static, register it with the NitroManager
             if (IsStatic)
             {
