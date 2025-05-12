@@ -16,7 +16,7 @@ namespace NitroNetwork.Core
         public ushort Id; // Unique identifier for this identity
         [SerializeField]
         private bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
-
+        public string roomName;
         // Connections associated with this identity
         public NitroConn conn, callConn;
 
@@ -24,6 +24,7 @@ namespace NitroNetwork.Core
 
         // Dictionaries for storing server and client RPCs
         internal Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
+        public List<string> RpcServerList = new(), RpcClientList = new();
 
         /// <summary>
         /// Called when the object is initialized.
@@ -37,16 +38,31 @@ namespace NitroNetwork.Core
                 if (IsServer || IsStatic) nb.__RegisterMyRpcServer(RpcServer);
                 if (IsClient || IsStatic) nb.__RegisterMyRpcClient(RpcClient);
             }
-
-           
             // If the identity is static, register it with the NitroManager
+            if (IsStatic || IsClient)
+            {
+                NitroManager.RegisterIdentity(this, IsServer, IsStatic);
+            }
+
             if (IsStatic)
             {
-                NitroManager.RegisterIdentity(this, IsStatic: IsStatic);
                 SetConfig();
             }
+            // Adds registered RPCs to lists for debugging
+            foreach (var rpc in RpcServer)
+            {
+                RpcServerList.Add($"Key {rpc.Key} value {rpc.Value.Method.Name}");
+            }
+            foreach (var rpc in RpcClient)
+            {
+                RpcClientList.Add($"Key {rpc.Key} value {rpc.Value.Method.Name}");
+            }
         }
-
+        internal void SetRoom(NitroRoom room)
+        {
+            roomName = room.Name;
+            this.room = room;
+        }
         /// <summary>
         /// Configures the identity based on its current state.
         /// </summary>
@@ -99,7 +115,6 @@ namespace NitroNetwork.Core
 
             gameObject.SetActive(false); // Deactivates the current object
             var newIdentity = Instantiate(this); // Instantiates a new identity
-            NitroManager.RegisterIdentity(newIdentity); // Registers the new identity with the NitroManager
             using var buffer = NitroManager.Rent();
             // Configures the buffer for the spawn RPC
             buffer.SetInfo((byte)NitroCommands.SpawnRPC, (ushort)NitroCommands.SpawnIdentity);
@@ -112,8 +127,10 @@ namespace NitroNetwork.Core
             newIdentity.name = $"{name}(Server)";
 
             newIdentity.SetConfig();
+            
+            NitroManager.RegisterIdentity(newIdentity);
+            newIdentity.SendSpawnForClient(conn, Target.All, newRoom: newRoom);
             newRoom.SetIdentity(newIdentity);
-            SendSpawnForClient(conn, Target.All, room: newRoom);
             newIdentity.gameObject.SetActive(true);
             return newIdentity;
         }
@@ -125,7 +142,7 @@ namespace NitroNetwork.Core
         /// <param name="target">The target audience for the spawn RPC.</param>
         /// <param name="room">The room associated with the spawn RPC.</param>
         /// <returns>The current NitroIdentity.</returns>
-        internal NitroIdentity SendSpawnForClient(NitroConn conn = null, Target target = Target.All, NitroRoom room = null)
+        internal NitroIdentity SendSpawnForClient(NitroConn conn = null, Target target = Target.All, NitroRoom newRoom = null)
         {
             using var buffer = NitroManager.Rent();
             buffer.SetInfo((byte)NitroCommands.SpawnRPC, (ushort)NitroCommands.SpawnIdentity);
@@ -136,7 +153,7 @@ namespace NitroNetwork.Core
             buffer.Write(transform.position);
             buffer.Write(transform.rotation.eulerAngles);
             buffer.Write(transform.parent != null ? transform.parent.name : "");
-            NitroManager.SendForClient(buffer.Buffer.ToArray(), conn, room, target);
+            NitroManager.SendForClient(buffer.Buffer, conn, target: target, room: newRoom, roomValidate: room);
             buffer.Dispose();
             return this;
         }
@@ -147,13 +164,12 @@ namespace NitroNetwork.Core
         /// <param name="conn">The connection to send the destroy RPC to.</param>
         /// <param name="target">The target audience for the destroy RPC.</param>
         /// <param name="room">The room associated with the destroy RPC.</param>
-        internal void SendDestroyForClient(NitroConn conn = null, Target target = Target.All, NitroRoom room = null)
+        internal void SendDestroyForClient(NitroConn conn = null, Target target = Target.All, NitroRoom newRoom = null)
         {
             var buffer = new NitroBuffer();
             buffer.SetInfo((byte)NitroCommands.DespawnIdentity, (ushort)NitroCommands.SpawnIdentity);
             buffer.Write(Id);
-            room.peersRoom.TryGetValue(conn.Id, out var peerRoom);
-            NitroManager.SendForClient(buffer.Buffer.ToArray(), conn, target: target, room: room);
+            NitroManager.SendForClient(buffer.Buffer, conn, target: target, room: room, roomValidate: newRoom);
         }
 
         /// <summary>
@@ -161,7 +177,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public void Destroy()
         {
-            SendDestroyForClient(conn, room: room);
+            SendDestroyForClient(conn);
             Destroy(gameObject);
         }
 
@@ -184,6 +200,5 @@ namespace NitroNetwork.Core
                 RpcServer.Clear();
             }
         }
-
     }
 }

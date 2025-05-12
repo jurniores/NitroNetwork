@@ -32,8 +32,11 @@ namespace NitroNetwork.Core
         {
             if (rooms.TryAdd(room.Name, room))
             {
-                UnityEngine.Debug.Log($"Room added: {room.Name} to peer {Id}");
                 return true;
+            }
+            else
+            {
+                NitroLogs.LogWarning($"Failed to add room {room.Name} to peer {Id}");
             }
             return false;
         }
@@ -62,7 +65,7 @@ namespace NitroNetwork.Core
             {
                 return true;
             }
-            UnityEngine.Debug.LogWarning($"Failed to remove room {room.Name} from peer {Id}");
+            NitroLogs.LogWarning($"Failed to remove room {room.Name} from peer {Id}");
             return false;
         }
 

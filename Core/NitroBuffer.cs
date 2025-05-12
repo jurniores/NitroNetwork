@@ -166,7 +166,7 @@ namespace NitroNetwork.Core
             if (tam + size > buffer.Length)
             {
                 string errorMsg = $"Error reading {typeof(T).Name}: current position ({tam}) + size ({size}) exceeds buffer length ({buffer.Length})";
-                UnityEngine.Debug.LogError(errorMsg);
+                NitroLogs.LogError(errorMsg);
                 throw new InvalidOperationException(errorMsg);
             }
 
@@ -186,7 +186,7 @@ namespace NitroNetwork.Core
             catch (Exception ex)
             {
                 string errorMsg = $"Error reading {typeof(T).Name}: {ex.Message}";
-                UnityEngine.Debug.LogError(errorMsg);
+                NitroLogs.LogError(errorMsg);
 
                 // Show bytes in the region to help with debugging
                 int startPos = Math.Max(0, tam - 10);
@@ -194,7 +194,7 @@ namespace NitroNetwork.Core
                 byte[] contextBytes = new byte[length];
                 Array.Copy(buffer, startPos, contextBytes, 0, length);
 
-                UnityEngine.Debug.LogError($"Context (bytes from position {startPos}): {BitConverter.ToString(contextBytes)}");
+                NitroLogs.LogError($"Context (bytes from position {startPos}): {BitConverter.ToString(contextBytes)}");
                 throw;
             }
         }
@@ -208,7 +208,7 @@ namespace NitroNetwork.Core
         /// <exception cref="FormatException">Thrown when the record separator is not found.</exception>
         private T ReadClass<T>()
         {
-            UnityEngine.Debug.Log($"Reading class {typeof(T).Name} from buffer at position {tam}");
+            NitroLogs.Log($"Reading class {typeof(T).Name} from buffer at position {tam}");
             Span<byte> bSpan = buffer.AsSpan(tam);
 
             ushort size = (ushort)((bSpan[0] & 0xFF) | ((bSpan[1] & 0xFF) << 8));

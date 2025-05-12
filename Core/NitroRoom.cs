@@ -16,16 +16,19 @@ namespace NitroNetwork.Core
         {
             if (!NitroManager.RoomExists(this))
             {
-                UnityEngine.Debug.LogError($"Room {Name} does not exist.");
+                NitroLogs.LogError($"Room {Name} does not exist.");
                 return false;
             }
             if (peersRoom.TryAdd(conn.Id, conn))
             {
                 conn.AddRoom(this);
                 SpawnIdentities(conn);
-                UnityEngine.Debug.Log($"Peer {conn.Id} added to room {Name}");
                 return true;
-            };
+            }
+            else
+            {
+                NitroLogs.LogError($"Peer {conn.Id} already in room {Name}");
+            }
             return false;
         }
         public bool LeaveRoom(NitroConn conn)
@@ -41,12 +44,12 @@ namespace NitroNetwork.Core
                         identities.Remove(identity.Key);
                         continue;
                     }
-                    identity.Value.SendDestroyForClient(conn, room: this, target: Target.Self);
+                    identity.Value.SendDestroyForClient(conn, target: Target.Self);
                 }
 
                 peersRoom.Remove(conn.Id);
                 conn.RemoveRoom(this);
-                UnityEngine.Debug.Log($"Peer {conn.Id} removed from room {Name}");
+                NitroLogs.Log($"Peer {conn.Id} removed from room {Name}");
 
                 NitroManager.RemoveRoomAuto(this);
                 return true;
@@ -55,28 +58,27 @@ namespace NitroNetwork.Core
         }
         public bool AddIdentity(NitroIdentity identity)
         {
-            if (identities.TryAdd(identity.Id, identity))
+            if (!peersRoom.ContainsKey(identity.conn.Id))
+            {
+                NitroLogs.LogError($"Peer {identity.conn.Id} not in room {Name}");
+                return false;
+            }
+            if (!identities.ContainsKey(identity.Id))
             {
                 if (identity.room != null)
                 {
-                    identity.SendDestroyForClient(identity.conn, room: identity.room, target: Target.AllExceptSelf);
+                    identity.SendDestroyForClient(identity.conn, newRoom: this, target: Target.AllExceptSelf);
                     identity.room.identities.Remove(identity.Id);
                 }
-                identity.room = this;
-                identity.SendSpawnForClient(identity.conn, room: this, target: Target.AllExceptSelf);
-                UnityEngine.Debug.Log($"Identity {identity.Id} add in room {Name}");
+                identity.SetRoom(this);
+                identity.SendSpawnForClient(identity.conn, newRoom: this, target: Target.AllExceptSelf);
+                identities.Add(identity.Id, identity);
+                NitroLogs.Log($"Identity {identity.Id} add in room {Name}");
                 return true;
             }
             return false;
         }
 
-        internal void SpawnIdentity(NitroIdentity identity, NitroConn conn)
-        {
-            if (identities.TryGetValue(identity.Id, out NitroIdentity nitroIdentity))
-            {
-                nitroIdentity.SendSpawnForClient(conn, room: this);
-            }
-        }
         internal void DestroyAllIdentities()
         {
 
@@ -96,21 +98,22 @@ namespace NitroNetwork.Core
         {
             if (identity.room != null)
             {
-                UnityEngine.Debug.Log($"Identity {identity.Id} already in room {identity.room.Name}");
+                NitroLogs.Log($"Identity {identity.Id} already in room {identity.room.Name}");
                 return;
             };
 
             if (identities.TryAdd(identity.Id, identity))
             {
-                identity.room = this;
-                UnityEngine.Debug.Log($"Identity {identity.Id} add in room {Name}");
+                identity.SetRoom(this);
+            }else{
+                NitroLogs.Log($"Identity {identity.Id} already in room {Name}");
             }
         }
         internal void SpawnIdentities(NitroConn conn)
         {
             foreach (var identity in identities)
             {
-                identity.Value.SendSpawnForClient(conn, Target.Self);
+                identity.Value.SendSpawnForClient(conn, Target.Self, newRoom: this);
             }
         }
     }

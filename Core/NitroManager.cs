@@ -6,6 +6,9 @@ using System.Reflection;
 using NitroNetwork.Core;
 using UnityEngine;
 using System.Net;
+using AYellowpaper.SerializedCollections;
+using System.Collections;
+
 
 #if UNITY_EDITOR
 using UnityEditorInternal;
@@ -25,8 +28,10 @@ namespace NitroNetwork.Core
         internal Dictionary<(ushort, byte), Action<NitroBuffer>> RpcsClient = new();
         public Dictionary<string, byte> IdRpcServers = new();
         public Dictionary<string, byte> IdRpcClients = new();
-        public Dictionary<ushort, NitroIdentity> identitiesServer = new();
-        public Dictionary<ushort, NitroIdentity> identitiesClient = new();
+        [SerializedDictionary("Key", "Value")]
+        public SerializedDictionary<ushort, NitroIdentity> identitiesServer = new();
+        [SerializedDictionary("Key", "Value")]
+        public SerializedDictionary<ushort, NitroIdentity> identitiesClient = new();
 
         private NitroRoom firstRoom = new NitroRoom(); // The first room created
         private NitroConn connCallManager = new(); // Connection manager for handling peer connections
@@ -206,28 +211,21 @@ namespace NitroNetwork.Core
         {
             if (IsStatic)
             {
-                if (!Instance.identitiesServer.TryAdd(identity.Id, identity))
-                {
-                    Debug.LogError($"Failed to add identity static {identity.Id} allready exists in server manager.");
-                }
-
-                if (!Instance.identitiesClient.TryAdd(identity.Id, identity))
-                {
-                    Debug.LogError($"Failed to add identity static {identity.Id} allready exists in client manager.");
-                }
-                //Instance.ReflectGetRPCs(identity);
+                Instance.identitiesServer[identity.Id] = identity;
+                Instance.identitiesClient[identity.Id] = identity;
                 return;
             }
-            ushort id = 0;
+
             if (IsServer)
             {
+                ushort id = 0;
                 while (!Instance.identitiesServer.TryAdd(id, identity)) id++;
                 identity.Id = id;
+
             }
             else
             {
-                while (!Instance.identitiesClient.TryAdd(id, identity)) id++;
-                identity.Id = id;
+                Instance.identitiesClient[identity.Id] = identity;
             }
             //Instance.ReflectGetRPCs(identity);
         }
@@ -239,14 +237,21 @@ namespace NitroNetwork.Core
         {
             if (IsStatic)
             {
-                if (!Instance.identitiesServer.Remove(identity.Id))
+
+                if (Instance.identitiesServer.TryGetValue(identity.Id, out var identityServer))
                 {
-                    Debug.LogError($"Failed to Remove identity static {identity.Id} to server manager.");
+                    if (identityServer == identity)
+                    {
+                        Instance.identitiesServer.Remove(identity.Id);
+                    }
                 }
 
-                if (!Instance.identitiesClient.Remove(identity.Id))
+                if (Instance.identitiesClient.TryGetValue(identity.Id, out var identityClient))
                 {
-                    Debug.LogError($"Failed to Remove identity static {identity.Id} to client");
+                    if (identityClient == identity)
+                    {
+                        Instance.identitiesClient.Remove(identity.Id);
+                    }
                 }
 
                 return;
@@ -254,16 +259,23 @@ namespace NitroNetwork.Core
 
             if (IsServer)
             {
-                if (!Instance.identitiesServer.Remove(identity.Id))
+
+                if (Instance.identitiesServer.TryGetValue(identity.Id, out var identityServer))
                 {
-                    Debug.LogError($"Failed to Remove identity {identity.Id} to server manager.");
+                    if (identityServer == identity)
+                    {
+                        Instance.identitiesServer.Remove(identity.Id);
+                    }
                 }
             }
             else
             {
-                if (!Instance.identitiesClient.Remove(identity.Id))
+                if (Instance.identitiesClient.TryGetValue(identity.Id, out var identityClient))
                 {
-                    Debug.LogError($"Failed to Remove identity {identity.Id} to client");
+                    if (identityClient == identity)
+                    {
+                        Instance.identitiesClient.Remove(identity.Id);
+                    }
                 }
             }
         }
@@ -378,7 +390,6 @@ namespace NitroNetwork.Core
 
         internal static void Send(NitroConn conn, Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0, bool IsServer = true)
         {
-
             Instance.transporter.Send(conn.Id, message, deliveryMode, channel, IsServer);
         }
         /// <summary>
@@ -455,7 +466,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Sends a message to all clients in a room or to a specific client.
         /// </summary>
-        public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
+        public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
             if (conn != null && target == Target.Self)
             {
@@ -476,18 +487,21 @@ namespace NitroNetwork.Core
                     {
                         if (id == conn.Id) continue;
                     }
+                    if (roomValidate != null && roomValidate.peersRoom.ContainsKey(id))
+                    {
+                        continue;
+                    }
                     Send(connRoom, message, deliveryMode, channel, true);
                 }
                 return;
             }
         }
-
         /// <summary>
         /// Sends a message to the server.
         /// </summary>
         public static void SendForServer(Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            if (Instance.ClientConn != null) Send(Instance.ServerConn, message, deliveryMode, channel, false);
+            if (Instance.ClientConn != null) Send(Instance.ClientConn, message, deliveryMode, channel, false);
         }
 
         /// <summary>
@@ -521,6 +535,7 @@ namespace NitroNetwork.Core
         /// </summary>
         void DestroyBuffer(NitroBuffer buffer)
         {
+
             var identityId = buffer.Read<ushort>();
             if (Instance.identitiesClient.TryGetValue(identityId, out var identity))
             {
@@ -584,8 +599,7 @@ namespace NitroNetwork.Core
             {
                 prefab.gameObject.SetActive(false);
                 var identity = Instantiate(prefab);
-                RegisterIdentity(identity, false);
-
+                //RegisterIdentity(identity, false);
                 identity.SetConfig(connCallManager, identityId, false, true, connCallManager.Id == Instance.ClientConn.Id);
                 identity.name = namePrefab + "(Client)";
                 if (!string.IsNullOrEmpty(nameParent) && spawnInParent)
@@ -597,7 +611,7 @@ namespace NitroNetwork.Core
                 identity.transform.position = pos;
                 identity.transform.rotation = Quaternion.Euler(rot);
                 identity.gameObject.SetActive(true);
-                Instance.identitiesServer.TryAdd(identityId, identity);
+                //Instance.identitiesServer.TryAdd(identityId, identity);
             }
             else
             {
