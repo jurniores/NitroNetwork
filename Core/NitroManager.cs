@@ -227,7 +227,6 @@ namespace NitroNetwork.Core
             {
                 Instance.identitiesClient[identity.Id] = identity;
             }
-            //Instance.ReflectGetRPCs(identity);
         }
 
         /// <summary>

@@ -37,6 +37,7 @@ namespace NitroNetwork.Core
             NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, target: target, deliveryMode: deliveryMode, channel: channel);
             Identity.callConn = null;
         }
+        protected internal virtual void OnInstantiated(){}
         protected internal virtual void __RegisterMyRpcServer(Dictionary<int, Action<NitroBuffer>> RpcServer)
         {
             __tamRpcS = RpcServer.Count;

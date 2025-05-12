@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using AYellowpaper.SerializedCollections;
 using UnityEngine;
+using UnityEngine.Diagnostics;
 namespace NitroNetwork.Core
 {
     [DefaultExecutionOrder(-99)] // Sets the execution order of this script in Unity
@@ -23,9 +26,10 @@ namespace NitroNetwork.Core
         public NitroRoom room; // Room associated with this identity
 
         // Dictionaries for storing server and client RPCs
-        internal Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
+        [SerializedDictionary("Key", "Value")]
+        public SerializedDictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
         public List<string> RpcServerList = new(), RpcClientList = new();
-
+        private NitroBehaviour[] behaviours; // Array of child behaviors associated with this identity
         /// <summary>
         /// Called when the object is initialized.
         /// Registers RPCs and configures the identity.
@@ -33,7 +37,9 @@ namespace NitroNetwork.Core
         void Awake()
         {
             // Registers RPCs for child behaviors
-            foreach (var nb in GetComponentsInChildren<NitroBehaviour>(true))
+            behaviours = GetComponentsInChildren<NitroBehaviour>(true);
+
+            foreach (var nb in behaviours)
             {
                 if (IsServer || IsStatic) nb.__RegisterMyRpcServer(RpcServer);
                 if (IsClient || IsStatic) nb.__RegisterMyRpcClient(RpcClient);
@@ -43,7 +49,6 @@ namespace NitroNetwork.Core
             {
                 NitroManager.RegisterIdentity(this, IsServer, IsStatic);
             }
-
             if (IsStatic)
             {
                 SetConfig();
@@ -58,6 +63,7 @@ namespace NitroNetwork.Core
                 RpcClientList.Add($"Key {rpc.Key} value {rpc.Value.Method.Name}");
             }
         }
+
         internal void SetRoom(NitroRoom room)
         {
             roomName = room.Name;
@@ -75,6 +81,17 @@ namespace NitroNetwork.Core
             {
                 nb.SetConfigs(this, IsServer, IsClient, IsMine);
             }
+        }
+        private void OnEnable()
+        {
+            if (IsServer) RpcServer.TryAdd((int)NitroCommands.SpawnRPC, OnInstantiated);
+            if (IsClient)
+            {
+                using var buffer = NitroManager.Rent();
+                buffer.SetInfo((byte)NitroCommands.SpawnRPC, Id);
+                NitroManager.SendForServer(buffer.Buffer);
+            }
+
         }
 
         /// <summary>
@@ -94,7 +111,14 @@ namespace NitroNetwork.Core
             IsMine = isMine;
             SetConfig();
         }
-
+        internal void OnInstantiated(NitroBuffer buffer)
+        {
+            print("Chamei quando instanciei");
+            foreach (var nb in behaviours)
+            {
+                nb.OnInstantiated();
+            }
+        }
         /// <summary>
         /// Spawns a new identity on the server and registers it.
         /// </summary>
@@ -127,7 +151,7 @@ namespace NitroNetwork.Core
             newIdentity.name = $"{name}(Server)";
 
             newIdentity.SetConfig();
-            
+
             NitroManager.RegisterIdentity(newIdentity);
             newIdentity.SendSpawnForClient(conn, Target.All, newRoom: newRoom);
             newRoom.SetIdentity(newIdentity);
