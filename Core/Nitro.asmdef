@@ -2,9 +2,7 @@
     "name": "Nitro",
     "rootNamespace": "",
     "references": [
-        "LiteNetLib",
-        "AYellowpaper.SerializedCollections",
-        "AYellowpaper.SerializedCollections.Editor"
+        "LiteNetLib"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
