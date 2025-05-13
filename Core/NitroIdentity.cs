@@ -16,7 +16,7 @@ namespace NitroNetwork.Core
         public bool IsStatic = false; // Indicates if the identity is static (does not change during execution)
 
         private string namePrefab; // Name of the prefab associated with this identity
-        public ushort Id; // Unique identifier for this identity
+        public int Id; // Unique identifier for this identity
         [SerializeField]
         private bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
         public string roomName;
@@ -100,7 +100,7 @@ namespace NitroNetwork.Core
         /// <param name="isServer">Indicates if this identity belongs to the server.</param>
         /// <param name="isClient">Indicates if this identity belongs to the client.</param>
         /// <param name="isMine">Indicates if this identity belongs to the local player.</param>
-        internal void SetConfig(NitroConn conn, ushort id, bool isServer, bool isClient, bool isMine)
+        internal void SetConfig(NitroConn conn, int id, bool isServer, bool isClient, bool isMine)
         {
             Id = id;
             this.conn = conn;
@@ -139,7 +139,7 @@ namespace NitroNetwork.Core
             var newIdentity = Instantiate(this); // Instantiates a new identity
             using var buffer = NitroManager.Rent();
             // Configures the buffer for the spawn RPC
-            buffer.SetInfo((byte)NitroCommands.SpawnRPC, (ushort)NitroCommands.SpawnIdentity);
+            buffer.SetInfo((byte)NitroCommands.SpawnRPC, (int)NitroCommands.SpawnIdentity);
             Id = newIdentity.Id;
             this.conn = conn;
             newIdentity.conn = conn;
@@ -168,7 +168,7 @@ namespace NitroNetwork.Core
         internal NitroIdentity SendSpawnForClient(NitroConn conn = null, Target target = Target.All, NitroRoom newRoom = null)
         {
             using var buffer = NitroManager.Rent();
-            buffer.SetInfo((byte)NitroCommands.SpawnRPC, (ushort)NitroCommands.SpawnIdentity);
+            buffer.SetInfo((byte)NitroCommands.SpawnRPC, (int)NitroCommands.SpawnIdentity);
             buffer.Write(this.Id);
             buffer.Write(this.conn.Id);
             buffer.Write(SpawnInParent);
@@ -190,7 +190,7 @@ namespace NitroNetwork.Core
         internal void SendDestroyForClient(NitroConn conn = null, Target target = Target.All, NitroRoom newRoom = null)
         {
             var buffer = new NitroBuffer();
-            buffer.SetInfo((byte)NitroCommands.DespawnIdentity, (ushort)NitroCommands.SpawnIdentity);
+            buffer.SetInfo((byte)NitroCommands.DespawnIdentity, (int)NitroCommands.SpawnIdentity);
             buffer.Write(Id);
             NitroManager.SendForClient(buffer.Buffer, conn, target: target, room: room, roomValidate: newRoom);
         }

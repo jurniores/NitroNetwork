@@ -24,12 +24,12 @@ namespace NitroNetwork.Core
         public Dictionary<string, NitroIdentity> nitroPrefabsDic = new();
         public Dictionary<int, NitroConn> peers = new();
         public Dictionary<string, NitroRoom> rooms = new();
-        internal Dictionary<(ushort, byte), Action<NitroBuffer>> RpcsServer = new();
-        internal Dictionary<(ushort, byte), Action<NitroBuffer>> RpcsClient = new();
+        internal Dictionary<(int, byte), Action<NitroBuffer>> RpcsServer = new();
+        internal Dictionary<(int, byte), Action<NitroBuffer>> RpcsClient = new();
         public Dictionary<string, byte> IdRpcServers = new();
         public Dictionary<string, byte> IdRpcClients = new();
-        public Dictionary<ushort, NitroIdentity> identitiesServer = new();
-        public Dictionary<ushort, NitroIdentity> identitiesClient = new();
+        public Dictionary<int, NitroIdentity> identitiesServer = new();
+        public Dictionary<int, NitroIdentity> identitiesClient = new();
         private NitroRoom firstRoom = new NitroRoom(); // The first room created
         private NitroConn connCallManager = new(); // Connection manager for handling peer connections
         private static NitroManager Instance; // Singleton instance of NitroManager
@@ -60,9 +60,9 @@ namespace NitroNetwork.Core
             idServer = 0;
 
             // Register default RPCs for the client
-            RpcsClient.Add(((ushort)NitroCommands.SpawnIdentity, (byte)NitroCommands.SpawnRPC), SpawnInClient);
-            RpcsClient.Add(((ushort)NitroCommands.SpawnIdentity, (byte)NitroCommands.DespawnIdentity), DestroyBuffer);
-            RpcsClient.Add(((ushort)NitroCommands.GetConnection, (byte)NitroCommands.Connected), GetConnectionClient);
+            RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.SpawnRPC), SpawnInClient);
+            RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.DespawnIdentity), DestroyBuffer);
+            RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connected), GetConnectionClient);
 
             // Add Nitro prefabs to the dictionary
             foreach (var prefabs in nitroPrefabs)
@@ -205,7 +205,7 @@ namespace NitroNetwork.Core
 
             if (IsServer)
             {
-                ushort id = 0;
+                int id = 0;
                 while (!Instance.identitiesServer.TryAdd(id, identity)) id++;
                 identity.Id = id;
 
@@ -300,7 +300,7 @@ namespace NitroNetwork.Core
             void SendInfoInitialForClient()
             {
                 var buffer = new NitroBuffer();
-                buffer.SetInfo((byte)NitroCommands.Connected, (ushort)NitroCommands.GetConnection);
+                buffer.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
                 buffer.Write(conn.Id);
                 Send(conn, buffer.Buffer, DeliveryMode.ReliableOrdered, 0);
             }
@@ -345,7 +345,7 @@ namespace NitroNetwork.Core
             {
                 Name = name,
                 autoDestroy = autoDestroy,
-                Id = (ushort)Instance.rooms.Count,
+                Id = (int)Instance.rooms.Count,
             };
             if (Instance.rooms.TryAdd(name, room))
             {
@@ -411,10 +411,9 @@ namespace NitroNetwork.Core
         internal void Recieve(ReadOnlySpan<byte> message, int peerId, bool IsServer)
         {
             byte id = message[0];
-            ushort identityId = (ushort)((message[1] & 0xFF) | ((message[2] & 0xFF) << 8));
-            NitroBuffer buffer = new NitroBuffer();
+            int identityId = (message[1] & 0xFF) | ((message[2] & 0xFF) << 8) | ((message[3] & 0xFF) << 16) | ((message[4] & 0xFF) << 24);
+            using var buffer = Rent();
 
-            buffer.SetInfo(id, identityId);
             buffer.WriteForRead(message);
 
             if (IsServer)
@@ -524,7 +523,7 @@ namespace NitroNetwork.Core
         void DestroyBuffer(NitroBuffer buffer)
         {
 
-            var identityId = buffer.Read<ushort>();
+            var identityId = buffer.Read<int>();
             if (Instance.identitiesClient.TryGetValue(identityId, out var identity))
             {
                 Destroy(identity.gameObject);
@@ -547,7 +546,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Retrieves a Nitro prefab by ID.
         /// </summary>
-        public static NitroIdentity GetPrefab(ushort id)
+        public static NitroIdentity GetPrefab(int id)
         {
             var identity = Instance.nitroPrefabs.ElementAt(id);
             if (identity != null)
@@ -573,7 +572,7 @@ namespace NitroNetwork.Core
         /// </summary>
         void SpawnInClient(NitroBuffer buffer)
         {
-            var identityId = buffer.Read<ushort>();
+            var identityId = buffer.Read<int>();
             var coonId = buffer.Read<int>();
             var spawnInParent = buffer.Read<bool>();
             var namePrefab = buffer.Read<string>();

@@ -27,7 +27,7 @@ namespace NitroNetwork.Core
         /// Current position in the buffer. Starts at 3 to reserve space for
         /// command ID and identity ID in the first bytes.
         /// </summary>
-        internal int tam = 3;
+        internal int tam = 5;
         public NitroBuffer(int capacity)
         {
             buffer = new byte[capacity];
@@ -118,7 +118,7 @@ namespace NitroNetwork.Core
 
             tam += size_t;
         }
-        public unsafe void WriteForRead(ReadOnlySpan<byte> span)
+        public void WriteForRead(ReadOnlySpan<byte> span)
         {
             span.CopyTo(buffer.AsSpan());
         }
@@ -127,11 +127,13 @@ namespace NitroNetwork.Core
         /// </summary>
         /// <param name="id">The command ID.</param>
         /// <param name="identityId">The identity ID.</param>
-        public void SetInfo(byte id, ushort identityId)
+        public void SetInfo(byte id, int identityId)
         {
             buffer[0] = id;
             buffer[1] = (byte)(identityId & 0xFF);
             buffer[2] = (byte)((identityId >> 8) & 0xFF);
+            buffer[3] = (byte)((identityId >> 16) & 0xFF);
+            buffer[4] = (byte)((identityId >> 24) & 0xFF);
         }
 
         /// <summary>
@@ -274,7 +276,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public void Dispose()
         {
-            tam = 3;
+            tam = 5;
             NitroManager.bufferPool.Return(this);
         }
     }

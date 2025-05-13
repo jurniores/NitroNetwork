@@ -32,7 +32,7 @@ namespace NitroNetwork.Core
         /// Dictionary of network identities currently in the room.
         /// Key: Identity ID, Value: NitroIdentity instance.
         /// </summary>
-        public Dictionary<ushort, NitroIdentity> identities = new();
+        public Dictionary<int, NitroIdentity> identities = new();
 
         /// <summary>
         /// If true, the room will be automatically destroyed when empty.
