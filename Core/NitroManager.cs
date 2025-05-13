@@ -42,7 +42,7 @@ namespace NitroNetwork.Core
         [SerializeField]
         private int port = 5000; // Default server port
 
-        public NitroConn ClientConn, ServerConn; // Connections for client and server
+        public static NitroConn ClientConn, ServerConn; // Connections for client and server
 
         Transporter transporter; // Transporter for handling network communication
         internal bool IsServer, IsClient; // Flags to indicate server or client mode
@@ -128,6 +128,8 @@ namespace NitroNetwork.Core
         public static void ConnectServer(int port)
         {
             Instance.transporter.ServerConnect("127.0.0.1", port);
+            Instance.firstRoom = CreateRoom(Guid.NewGuid().ToString(), false);
+            Instance.firstRoom.JoinRoom(ServerConn);
         }
 
         /// <summary>
@@ -145,13 +147,6 @@ namespace NitroNetwork.Core
         public static void DisconnectConn(NitroConn conn)
         {
             Instance.transporter.DisconnectPeer(conn.Id);
-        }
-        /// <summary>
-        /// Creates the first room when the object starts.
-        /// </summary>
-        void Start()
-        {
-            firstRoom = CreateRoom(Guid.NewGuid().ToString(), false);
         }
 
         /// <summary>
@@ -482,9 +477,9 @@ namespace NitroNetwork.Core
             {
                 foreach (var (id, connRoom) in room.peersRoom)
                 {
-                    if (target == Target.AllExceptSelf)
+                    if (target == Target.ExceptSelf && conn != null)
                     {
-                        if (id == conn.Id) continue;
+                        if (id == conn.Id && conn.Id != ServerConn.Id) continue;
                     }
                     if (roomValidate != null && roomValidate.peersRoom.ContainsKey(id))
                     {
@@ -500,7 +495,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForServer(Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            if (Instance.ClientConn != null) Send(Instance.ClientConn, message, deliveryMode, channel, false);
+            if (ClientConn != null) Send(ClientConn, message, deliveryMode, channel, false);
         }
 
         /// <summary>
@@ -599,7 +594,7 @@ namespace NitroNetwork.Core
                 prefab.gameObject.SetActive(false);
                 var identity = Instantiate(prefab);
                 //RegisterIdentity(identity, false);
-                identity.SetConfig(connCallManager, identityId, false, true, connCallManager.Id == Instance.ClientConn.Id);
+                identity.SetConfig(connCallManager, identityId, false, true, connCallManager.Id == ClientConn.Id);
                 identity.name = namePrefab + "(Client)";
                 if (!string.IsNullOrEmpty(nameParent) && spawnInParent)
                 {

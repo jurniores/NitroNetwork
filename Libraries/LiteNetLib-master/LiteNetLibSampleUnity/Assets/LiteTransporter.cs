@@ -172,6 +172,8 @@ namespace NitroNetwork.Core
         {
             if (IsServer)
             {
+                if(peerId == -1)return;
+                
                 var peer = _netServer.GetPeerById(peerId);
                 if (peer == null)
                 {

@@ -34,6 +34,7 @@ namespace NitroNetwork.Core
                     return;
                 }
             }
+            if(Identity.callConn == null) Identity.callConn = Identity.conn;
             NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, target: target, deliveryMode: deliveryMode, channel: channel);
             Identity.callConn = null;
         }
@@ -42,7 +43,6 @@ namespace NitroNetwork.Core
         {
             __tamRpcS = RpcServer.Count;
         }
-
         protected internal virtual void __RegisterMyRpcClient(Dictionary<int, Action<NitroBuffer>> RpcClient)
         {
             __tamRpcC = RpcClient.Count;

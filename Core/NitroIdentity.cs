@@ -91,7 +91,6 @@ namespace NitroNetwork.Core
                 buffer.SetInfo((byte)NitroCommands.SpawnRPC, Id);
                 NitroManager.SendForServer(buffer.Buffer);
             }
-
         }
 
         /// <summary>
@@ -113,7 +112,6 @@ namespace NitroNetwork.Core
         }
         internal void OnInstantiated(NitroBuffer buffer)
         {
-            print("Chamei quando instanciei");
             foreach (var nb in behaviours)
             {
                 nb.OnInstantiated();
@@ -145,6 +143,7 @@ namespace NitroNetwork.Core
             Id = newIdentity.Id;
             this.conn = conn;
             newIdentity.conn = conn;
+            newIdentity.callConn = conn;
             newIdentity.IsServer = true;
             newIdentity.namePrefab = name;
             namePrefab = name;

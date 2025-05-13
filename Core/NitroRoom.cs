@@ -67,11 +67,11 @@ namespace NitroNetwork.Core
             {
                 if (identity.room != null)
                 {
-                    identity.SendDestroyForClient(identity.conn, newRoom: this, target: Target.AllExceptSelf);
+                    identity.SendDestroyForClient(identity.conn, newRoom: this, target: Target.ExceptSelf);
                     identity.room.identities.Remove(identity.Id);
                 }
                 identity.SetRoom(this);
-                identity.SendSpawnForClient(identity.conn, newRoom: this, target: Target.AllExceptSelf);
+                identity.SendSpawnForClient(identity.conn, newRoom: this, target: Target.ExceptSelf);
                 identities.Add(identity.Id, identity);
                 NitroLogs.Log($"Identity {identity.Id} add in room {Name}");
                 return true;

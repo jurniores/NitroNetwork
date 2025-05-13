@@ -14,8 +14,8 @@ namespace NitroNetwork.Core
     public enum Target
     {
         All,
-        AllExceptSelf,
-        Self
+        ExceptSelf,
+        Self,
     }
 
     internal enum NitroCommands
