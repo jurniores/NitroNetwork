@@ -27,7 +27,6 @@ namespace NitroNetwork.Core
 
         // Dictionaries for storing server and client RPCs
         public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
-        public List<string> RpcServerList = new(), RpcClientList = new();
         private NitroBehaviour[] behaviours; // Array of child behaviors associated with this identity
         /// <summary>
         /// Called when the object is initialized.
