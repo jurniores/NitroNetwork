@@ -137,26 +137,9 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 | `channel`       | `int`           | `0`                       | Specifies the communication channel for the RPC.                            |
 
 ---
-### 🟢 OnInstantiated
-
-The `OnInstantiated` method in NitroBehaviour is a virtual callback that is automatically called on all networked scripts (`NitroBehaviour` components) attached to a prefab **immediately after the prefab is instantiated over the network** (either on the server or client).
-
-This method is ideal for initializing logic, setting up references, or triggering custom events right after a networked object appears in the scene.  
-Override this method in your own scripts to execute code when your object is spawned by NitroNetwork.
-
-**Example:**
-```csharp
-public partial class Player : NitroBehaviour
-{
-    protected override void OnInstantiated()
-    {
-        // Custom initialization logic for when the player is spawned
-        Debug.Log("Player spawned and ready!");
-    }
-}
 
 ### 🧪 Example: Using NitroRPC
-
+```csharp
 public partial class MyNetworkScript : NitroBehaviour
 {
     void Start()
@@ -181,7 +164,6 @@ public partial class MyNetworkScript : NitroBehaviour
     }
 }
 ```
-
 ### ☎️ Calling RPCs (Always Use `Call` Prefix)
 
 ```csharp
@@ -253,6 +235,24 @@ public partial class ConnectPeers : NitroBehaviour
     void ConnectToClient()
     {
         Debug.Log("Hello Client");
+    }
+}
+```
+### 🟢 OnInstantiated
+
+The `OnInstantiated` method in NitroBehaviour is a virtual callback that is automatically called on all networked scripts (`NitroBehaviour` components) attached to a prefab **immediately after the prefab is instantiated over the network** (either on the server or client).
+
+This method is ideal for initializing logic, setting up references, or triggering custom events right after a networked object appears in the scene.  
+Override this method in your own scripts to execute code when your object is spawned by NitroNetwork.
+
+**Example:**
+```csharp
+public partial class Player : NitroBehaviour
+{
+    protected override void OnInstantiated()
+    {
+        // Custom initialization logic for when the player is spawned
+        Debug.Log("Player spawned and ready!");
     }
 }
 ```
