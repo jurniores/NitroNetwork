@@ -28,32 +28,23 @@ namespace NitroNetwork.Core
         internal Dictionary<(ushort, byte), Action<NitroBuffer>> RpcsClient = new();
         public Dictionary<string, byte> IdRpcServers = new();
         public Dictionary<string, byte> IdRpcClients = new();
-        [SerializedDictionary("Key", "Value")]
-        public SerializedDictionary<ushort, NitroIdentity> identitiesServer = new();
-        [SerializedDictionary("Key", "Value")]
-        public SerializedDictionary<ushort, NitroIdentity> identitiesClient = new();
-
+        public Dictionary<ushort, NitroIdentity> identitiesServer = new();
+        public Dictionary<ushort, NitroIdentity> identitiesClient = new();
         private NitroRoom firstRoom = new NitroRoom(); // The first room created
         private NitroConn connCallManager = new(); // Connection manager for handling peer connections
         private static NitroManager Instance; // Singleton instance of NitroManager
-
         [SerializeField]
         private string address = "127.0.0.1"; // Default server address
         [SerializeField]
         private int port = 5000; // Default server port
-
         public static NitroConn ClientConn, ServerConn; // Connections for client and server
-
         Transporter transporter; // Transporter for handling network communication
         internal bool IsServer, IsClient; // Flags to indicate server or client mode
-
         [Header("Connect")]
         public bool Server = true; // Indicates if the server should be started
         public bool Client = true; // Indicates if the client should connect
-
         static byte idClient = 0; // Counter for client RPC IDs
         static byte idServer = 0; // Counter for server RPC IDs
-        
         public List<NitroIdentity> nitroPrefabs = new(); // List of Nitro prefabs
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn;
 

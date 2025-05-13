@@ -67,7 +67,6 @@ namespace NitroNetwork.Core
             NitroLogs.LogWarning($"Failed to remove room {room.Name} from peer {Id}");
             return false;
         }
-
         /// <summary>
         /// Destroys all identities associated with this connection.
         /// </summary>
