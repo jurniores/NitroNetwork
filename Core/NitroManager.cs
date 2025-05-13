@@ -53,8 +53,9 @@ namespace NitroNetwork.Core
 
         static byte idClient = 0; // Counter for client RPC IDs
         static byte idServer = 0; // Counter for server RPC IDs
-
+        
         public List<NitroIdentity> nitroPrefabs = new(); // List of Nitro prefabs
+        public static Action<NitroConn> OnConnectConn, OnDisconnectConn;
 
         /// <summary>
         /// Called when the object is initialized.
@@ -281,6 +282,7 @@ namespace NitroNetwork.Core
         {
             if (IsServer)
             {
+                OnConnectConn?.Invoke(conn);
                 peers.TryAdd(conn.Id, conn);
                 ids.Add(conn.Id);
                 SendInfoInitialForClient();
@@ -322,8 +324,9 @@ namespace NitroNetwork.Core
             {
                 if (peers.TryGetValue(peerId, out connCallManager))
                 {
-                    connCallManager.DestroyAllIdentities();
+                    OnDisconnectConn?.Invoke(connCallManager);
                     connCallManager.LeaveAllRooms();
+                    connCallManager.DestroyAllIdentities();
                     ids.Remove(connCallManager.Id);
 
                     if (peers.Remove(connCallManager.Id))

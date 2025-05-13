@@ -9,20 +9,21 @@ namespace NitroNetwork.Core
     {
         public int Id; // Unique identifier for the connection
         public IPEndPoint iPEndPoint; // IP endpoint associated with this connection
-
-        //public Action<Span<byte>, DeliveryMode, byte> Send; // Delegate for sending data through this connection
         public Dictionary<string, NitroRoom> rooms = new(); // Dictionary of rooms associated with this connection
-        internal Dictionary<int, NitroIdentity> identitiesOnDestroy = new(); // Dictionary of identities to be destroyed when the connection is terminated
-
+        public Dictionary<int, NitroIdentity> identities = new(); // Dictionary of identities to be destroyed when the connection is terminated
+        public Dictionary<object, object> customData = new(); // Dictionary for storing custom data associated with this connection
         /// <summary>
         /// Adds an identity to the list of identities associated with this connection.
         /// </summary>
         /// <param name="identity">The identity to add.</param>
         public void AddIdentity(NitroIdentity identity)
         {
-            identitiesOnDestroy.Add(identity.Id, identity);
+            identities.Add(identity.Id, identity);
         }
-
+        public void RemoveIdentity(NitroIdentity identity)
+        {
+            identities.Remove(identity.Id);
+        }
         /// <summary>
         /// Adds a room to the list of rooms associated with this connection.
         /// </summary>
@@ -40,7 +41,6 @@ namespace NitroNetwork.Core
             }
             return false;
         }
-
         /// <summary>
         /// Removes all rooms associated with this connection.
         /// </summary>
@@ -49,11 +49,10 @@ namespace NitroNetwork.Core
             for (int i = rooms.Values.Count - 1; i >= 0; i--)
             {
                 var room = new List<NitroRoom>(rooms.Values)[i];
-                room.LeaveRoom(this);
+                room.RemoveConn(this);
             }
             rooms.Clear();
         }
-
         /// <summary>
         /// Removes a specific room from the list of rooms associated with this connection.
         /// </summary>
@@ -74,11 +73,12 @@ namespace NitroNetwork.Core
         /// </summary>
         internal void DestroyAllIdentities()
         {
-            foreach (var identity in identitiesOnDestroy)
+            foreach (var identity in identities)
             {
                 identity.Value.Destroy();
             }
-            identitiesOnDestroy.Clear();
+            identities.Clear();
+            customData.Clear();
         }
     }
 }

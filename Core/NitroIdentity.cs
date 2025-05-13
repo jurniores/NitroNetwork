@@ -26,8 +26,7 @@ namespace NitroNetwork.Core
         public NitroRoom room; // Room associated with this identity
 
         // Dictionaries for storing server and client RPCs
-        [SerializedDictionary("Key", "Value")]
-        public SerializedDictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
+        public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
         public List<string> RpcServerList = new(), RpcClientList = new();
         private NitroBehaviour[] behaviours; // Array of child behaviors associated with this identity
         /// <summary>
@@ -116,6 +115,7 @@ namespace NitroNetwork.Core
             {
                 nb.OnInstantiated();
             }
+            callConn = conn;
         }
         /// <summary>
         /// Spawns a new identity on the server and registers it.
@@ -219,7 +219,7 @@ namespace NitroNetwork.Core
             {
                 NitroManager.UnRegisterIdentity(this);
                 room?.identities.Remove(Id);
-                conn?.identitiesOnDestroy.Remove(Id);
+                conn?.identities.Remove(Id);
                 RpcServer.Clear();
             }
         }
