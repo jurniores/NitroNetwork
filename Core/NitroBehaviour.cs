@@ -34,9 +34,9 @@ namespace NitroNetwork.Core
                     return;
                 }
             }
-            if(Identity.callConn == null) Identity.callConn = Identity.conn;
+            
             NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, target: target, deliveryMode: deliveryMode, channel: channel);
-            Identity.callConn = null;
+            Identity.callConn = Identity.conn;
         }
         protected internal virtual void OnInstantiated(){}
         protected internal virtual void __RegisterMyRpcServer(Dictionary<int, Action<NitroBuffer>> RpcServer)
