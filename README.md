@@ -139,7 +139,7 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 ---
 
 ### 🧪 Example: Using NitroRPC
-
+```csharp
 public partial class MyNetworkScript : NitroBehaviour
 {
     void Start()
@@ -164,7 +164,6 @@ public partial class MyNetworkScript : NitroBehaviour
     }
 }
 ```
-
 ### ☎️ Calling RPCs (Always Use `Call` Prefix)
 
 ```csharp
