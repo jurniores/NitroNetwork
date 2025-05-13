@@ -51,15 +51,7 @@ namespace NitroNetwork.Core
             {
                 SetConfig();
             }
-            // Adds registered RPCs to lists for debugging
-            foreach (var rpc in RpcServer)
-            {
-                RpcServerList.Add($"Key {rpc.Key} value {rpc.Value.Method.Name}");
-            }
-            foreach (var rpc in RpcClient)
-            {
-                RpcClientList.Add($"Key {rpc.Key} value {rpc.Value.Method.Name}");
-            }
+           
         }
 
         internal void SetRoom(NitroRoom room)
