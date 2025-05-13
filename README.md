@@ -383,14 +383,16 @@ NitroConn conn = new NitroConn();
 
 // Unique ID of the connection (assigned on creation)
 conn.Id;
-
 // Remote IP and port of the peer (UnityEngine.IPEndPoint)
 conn.iPEndPoint;
-
+ // Dictionary for storing custom data associated with this connection
+conn.customData;
 // Associates a network identity with this connection.
 // If the connection is lost, the identity is automatically destroyed.
 conn.AddIdentity(nitroIdentity);
-
+// Removes a network identity from this connection.
+// This is useful for manual cleanup or transferring ownership.
+conn.RemoveIdentity(NitroIdentity identity);
 // List of rooms that this connection is currently listening to
 conn.rooms;
 ```
@@ -404,33 +406,27 @@ It provides static methods for controlling both the server and client lifecycle,
 ### 🧪 Example Usage
 
 ```csharp
+NitroManager.OnDisconnectConn;
 // Connects the client to a server
 NitroManager.ConnectClient("127.0.0.1", 7777);
-
 // Starts the server on the specified port
 NitroManager.ConnectServer(7777);
-
 // Disconnects the current active client or server
 NitroManager.Disconnect();
-
 // Disconnects a specific client by its connection object
 NitroManager.DisconnectConn(Identity.conn);
-
+// Events triggered on peer connect/disconnect
+NitroManager.OnConnectConn;
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
-
 // Removes a specific room instance
 NitroManager.RemoveRoom(room);
-
 // Gets the first (default/universal) room
 NitroManager.GetFirstRoom();
-
 // Checks whether a room is registered
 NitroManager.RoomExists(room);
-
 // Fetches a prefab by ID (int)
 NitroManager.GetPrefab(1);
-
 // Fetches a prefab by name (string)
 NitroManager.GetPrefab("Player");
 ```
