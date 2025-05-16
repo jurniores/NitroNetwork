@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using UnityEngine;
-
-
-
 #if UNITY_EDITOR
 using UnityEditorInternal;
 #endif
@@ -42,7 +39,8 @@ namespace NitroNetwork.Core
         static byte idClient = 0; // Counter for client RPC IDs
         static byte idServer = 0; // Counter for server RPC IDs
         public List<NitroIdentity> nitroPrefabs = new(); // List of Nitro prefabs
-        public static Action<NitroConn> OnConnectConn, OnDisconnectConn;
+        public static Action<NitroConn> OnConnectConn, OnDisconnectConn;// Actions for handling connection events
+        public static Action OnClientConnected, OnServerConnected; 
 
         /// <summary>
         /// Called when the object is initialized.
@@ -118,6 +116,8 @@ namespace NitroNetwork.Core
             Instance.transporter.ServerConnect("127.0.0.1", port);
             Instance.firstRoom = CreateRoom(Guid.NewGuid().ToString(), false);
             Instance.firstRoom.JoinRoom(ServerConn);
+            OnServerConnected?.Invoke();
+            Instance.IsServer = true;
         }
 
         /// <summary>
@@ -451,6 +451,11 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
+            if(Instance.peers.Count == 0)
+            {
+                Debug.LogWarning("No peers connected to send messages.");
+                return;
+            }
             if (conn != null && target == Target.Self)
             {
                 Send(conn, message, deliveryMode, channel, true);
@@ -484,7 +489,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForServer(Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            if (ClientConn != null) Send(ClientConn, message, deliveryMode, channel, false);
+            if (ClientConn != null) Send(ServerConn, message, deliveryMode, channel, false);
         }
 
         /// <summary>
@@ -561,6 +566,7 @@ namespace NitroNetwork.Core
             var connId = buffer.Read<int>();
 
             ClientConn.Id = connId;
+            OnClientConnected?.Invoke();
         }
 
         /// <summary>

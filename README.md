@@ -406,7 +406,7 @@ It provides static methods for controlling both the server and client lifecycle,
 ### 🧪 Example Usage
 
 ```csharp
-NitroManager.OnDisconnectConn;
+
 // Connects the client to a server
 NitroManager.ConnectClient("127.0.0.1", 7777);
 // Starts the server on the specified port
@@ -417,6 +417,10 @@ NitroManager.Disconnect();
 NitroManager.DisconnectConn(Identity.conn);
 // Events triggered on peer connect/disconnect
 NitroManager.OnConnectConn;
+NitroManager.OnDisconnectConn;
+//Events fired on your server and client when you are connected
+NitroManager.OnClientConnected
+NitroManager.OnServerConnected
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
 // Removes a specific room instance
