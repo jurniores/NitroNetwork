@@ -406,7 +406,7 @@ It provides static methods for controlling both the server and client lifecycle,
 ### 🧪 Example Usage
 
 ```csharp
-//Enable for connections to start automatically. If you build only as a client, it will reject the key sent by the server.
+//Enable for connections to start automatically. The private key will only not be destroyed if only the Server is enabled.
 //In other words, the private key is removed on the client during the build, increasing encryption security.
 //If you build both Server and Client, a new public and private key will be generated when the server starts and sent to clients over the network.
 NitroManager.Instance.Server;

@@ -15,7 +15,7 @@ public class ResetStringOnBuild : IPreprocessBuildWithReport, IPostprocessBuildW
     public void OnPreprocessBuild(BuildReport report)
     {
         NitroManager nitroManager = GameObject.FindFirstObjectByType<NitroManager>();
-        if (nitroManager != null && nitroManager.Client && !nitroManager.Server)
+        if (nitroManager != null && nitroManager.Client)
         {
             backupPrivateKey = nitroManager.privateKey;
             nitroManager.privateKey = "";
@@ -24,8 +24,6 @@ public class ResetStringOnBuild : IPreprocessBuildWithReport, IPostprocessBuildW
             // Salva o caminho da cena atual
             scenePath = nitroManager.gameObject.scene.path;
             EditorSceneManager.MarkSceneDirty(nitroManager.gameObject.scene);
-
-            Debug.Log("privateKey removido antes do build.");
         }
     }
 
@@ -46,12 +44,10 @@ public class ResetStringOnBuild : IPreprocessBuildWithReport, IPostprocessBuildW
                 EditorUtility.SetDirty(nitroManager);
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveOpenScenes();
-
-                Debug.Log("✅ privateKey restaurado e salvo com sucesso.");
             }
             else
             {
-                Debug.LogWarning("⚠ NitroManager não encontrado na cena para restauração.");
+                Debug.LogError("⚠ NitroManager not found in the scene for restoration.");
             }
 
             // (Opcional) Recarrega a cena anterior do editor, se quiser restaurar o estado visual
