@@ -406,7 +406,16 @@ It provides static methods for controlling both the server and client lifecycle,
 ### 🧪 Example Usage
 
 ```csharp
-
+//Enable for connections to start automatically. If you build only as a client, it will reject the key sent by the server.
+//In other words, the private key is removed on the client during the build, increasing encryption security.
+//If you build both Server and Client, a new public and private key will be generated when the server starts and sent to clients over the network.
+NitroManager.Instance.Server;
+NitroManager.Instance.Client;
+// Connects in LAN mode (likely initializes the LAN network). Searches for a local server; if none exists, creates one.
+NitroManager.Instance.ConnectInLan;
+// These are keys used for game encryption
+NitroManager.Instance.publicKey;
+NitroManager.Instance.privateKey;
 // Connects the client to a server
 NitroManager.ConnectClient("127.0.0.1", 7777);
 // Starts the server on the specified port

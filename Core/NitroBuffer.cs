@@ -279,6 +279,18 @@ namespace NitroNetwork.Core
             tam = 5;
             NitroManager.bufferPool.Return(this);
         }
+
+        public void EncriptRSA(string publicKey)
+        {
+            buffer = NitroCriptografy.Encrypt(publicKey, Buffer.ToArray());
+        }
+
+        public void DecryptRSA(string privateKey)
+        {
+            var bytes = NitroCriptografy.Decrypt(privateKey, buffer);
+            tam = 5;
+            WriteForRead(bytes);
+        }
     }
 }
 

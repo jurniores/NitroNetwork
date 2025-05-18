@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using UnityEngine;
+
+
 #if UNITY_EDITOR
 using UnityEditorInternal;
 #endif
@@ -12,8 +14,9 @@ namespace NitroNetwork.Core
     [RequireComponent(typeof(LiteTransporter))] // Requires LiteTransporter component to be attached to the GameObject
     public class NitroManager : MonoBehaviour
     {
+        [ReadOnly]
+        public string publicKey, privateKey; // Public and private keys for encryption
         internal static NitroBufferPool bufferPool; // Buffer pool for efficient memory management
-        public List<int> ids = new();
         public Dictionary<string, NitroIdentity> nitroPrefabsDic = new();
         public Dictionary<int, NitroConn> peers = new();
         public Dictionary<string, NitroRoom> rooms = new();
@@ -26,21 +29,24 @@ namespace NitroNetwork.Core
         private NitroRoom firstRoom = new NitroRoom(); // The first room created
         private NitroConn connCallManager = new(); // Connection manager for handling peer connections
         private static NitroManager Instance; // Singleton instance of NitroManager
-        [SerializeField]
+        public bool ConnectInLan = false;
+        [SerializeField, HideIf(nameof(ConnectInLan))]
         private string address = "127.0.0.1"; // Default server address
         [SerializeField]
         private int port = 5000; // Default server port
         public static NitroConn ClientConn, ServerConn; // Connections for client and server
         Transporter transporter; // Transporter for handling network communication
         internal bool IsServer, IsClient; // Flags to indicate server or client mode
-        [Header("Connect")]
+        [Header("Connect"), HideIf(nameof(ConnectInLan))]
         public bool Server = true; // Indicates if the server should be started
+        [HideIf(nameof(ConnectInLan))]
         public bool Client = true; // Indicates if the client should connect
+        [HideIf(nameof(ConnectInLan))]
         static byte idClient = 0; // Counter for client RPC IDs
         static byte idServer = 0; // Counter for server RPC IDs
         public List<NitroIdentity> nitroPrefabs = new(); // List of Nitro prefabs
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn;// Actions for handling connection events
-        public static Action OnClientConnected, OnServerConnected; 
+        public static Action OnClientConnected;
 
         /// <summary>
         /// Called when the object is initialized.
@@ -48,16 +54,20 @@ namespace NitroNetwork.Core
         /// </summary>
         private void Awake()
         {
+            OnClientConnected = null;
+            OnConnectConn = null;
+            OnDisconnectConn = null;
+            ServerConn = null;
+            ClientConn = null;
             bufferPool = new NitroBufferPool(32000); // Initialize buffer pool
             Instance = this;
             idClient = 0;
             idServer = 0;
-
             // Register default RPCs for the client
             RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.SpawnRPC), SpawnInClient);
             RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.DespawnIdentity), DestroyBuffer);
             RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connected), GetConnectionClient);
-
+            Debug.LogError("Chave key " + privateKey);
             // Add Nitro prefabs to the dictionary
             foreach (var prefabs in nitroPrefabs)
             {
@@ -73,7 +83,46 @@ namespace NitroNetwork.Core
             transporter.OnDisconnected += OnPeerDisconnected;
             transporter.OnError += OnError;
             transporter.IPConnection += RecieveIPEndPoint;
+            
+            if (Client && Server)
+            {
+                NitroCriptografy.GenerateKeys(out publicKey, out privateKey);
+            }
+            if (ConnectInLan)
+            {
+                ConnectClientLan(port, () =>
+                {
+                    ValidateConnect();
+                });
+            }
+            else
+            {
+                ValidateConnect();
+            }
 
+
+            // Prevent this object from being destroyed when loading new scenes
+            DontDestroyOnLoad(gameObject);
+        }
+
+        /// <summary>
+        /// Ensures the LiteTransporter component is moved below NitroManager in the Inspector.
+        /// </summary>
+        private void Reset()
+        {
+#if UNITY_EDITOR
+            NitroCriptografy.GenerateKeys(out publicKey, out privateKey);
+            var liteTransporter = GetComponent<LiteTransporter>();
+            var nitroManager = GetComponent<NitroManager>();
+
+            if (liteTransporter != null && nitroManager != null)
+            {
+                while (ComponentUtility.MoveComponentDown(liteTransporter)) { }
+            }
+#endif
+        }
+        void ValidateConnect()
+        {
             // Start the server and/or client based on configuration
             if (!IsUdpPortInUse(port) && Server)
             {
@@ -87,27 +136,7 @@ namespace NitroNetwork.Core
             {
                 ConnectClient(address, port);
             }
-
-            // Prevent this object from being destroyed when loading new scenes
-            DontDestroyOnLoad(gameObject);
         }
-
-        /// <summary>
-        /// Ensures the LiteTransporter component is moved below NitroManager in the Inspector.
-        /// </summary>
-        private void Reset()
-        {
-#if UNITY_EDITOR
-            var liteTransporter = GetComponent<LiteTransporter>();
-            var nitroManager = GetComponent<NitroManager>();
-
-            if (liteTransporter != null && nitroManager != null)
-            {
-                while (ComponentUtility.MoveComponentDown(liteTransporter)) { }
-            }
-#endif
-        }
-
         /// <summary>
         /// Starts the server on the specified port.
         /// </summary>
@@ -116,7 +145,6 @@ namespace NitroNetwork.Core
             Instance.transporter.ServerConnect("127.0.0.1", port);
             Instance.firstRoom = CreateRoom(Guid.NewGuid().ToString(), false);
             Instance.firstRoom.JoinRoom(ServerConn);
-            OnServerConnected?.Invoke();
             Instance.IsServer = true;
         }
 
@@ -126,6 +154,10 @@ namespace NitroNetwork.Core
         public static void ConnectClient(string address, int port)
         {
             Instance.transporter.ClientConnect(address, port);
+        }
+        public static void ConnectClientLan(int port, Action actionLanValidation)
+        {
+            Instance.transporter.ClientConnectLan(port, actionLanValidation);
         }
         public static void Disconnect()
         {
@@ -271,7 +303,6 @@ namespace NitroNetwork.Core
             {
                 OnConnectConn?.Invoke(conn);
                 peers.TryAdd(conn.Id, conn);
-                ids.Add(conn.Id);
                 SendInfoInitialForClient();
                 firstRoom.JoinRoom(conn);
 
@@ -286,6 +317,11 @@ namespace NitroNetwork.Core
             }
             else
             {
+                ServerConn = new NitroConn
+                {
+                    Id = -1,
+                    iPEndPoint = conn.iPEndPoint
+                };
                 foreach (var identity in identitiesClient)
                 {
                     identity.Value.SetConfig();
@@ -298,6 +334,7 @@ namespace NitroNetwork.Core
                 var buffer = new NitroBuffer();
                 buffer.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
                 buffer.Write(conn.Id);
+                buffer.Write(publicKey);
                 Send(conn, buffer.Buffer, DeliveryMode.ReliableOrdered, 0);
             }
         }
@@ -314,8 +351,6 @@ namespace NitroNetwork.Core
                     OnDisconnectConn?.Invoke(connCallManager);
                     connCallManager.LeaveAllRooms();
                     connCallManager.DestroyAllIdentities();
-                    ids.Remove(connCallManager.Id);
-
                     if (peers.Remove(connCallManager.Id))
                     {
                         Debug.Log($"Peer {connCallManager.Id} disconnected from server remove {connCallManager.iPEndPoint.Address}:{connCallManager.iPEndPoint.Port}");
@@ -374,6 +409,8 @@ namespace NitroNetwork.Core
 
         internal static void Send(NitroConn conn, Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0, bool IsServer = true)
         {
+
+
             Instance.transporter.Send(conn.Id, message, deliveryMode, channel, IsServer);
         }
         /// <summary>
@@ -393,12 +430,9 @@ namespace NitroNetwork.Core
             {
                 IsServer = true;
                 ServerConn = conn;
+                Debug.Log($"Connected to server at {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
             }
-            else
-            {
-                IsClient = true;
-                ClientConn = conn;
-            }
+
         }
 
         /// <summary>
@@ -451,7 +485,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            if(Instance.peers.Count == 0)
+            if (Instance.peers.Count == 0)
             {
                 Debug.LogWarning("No peers connected to send messages.");
                 return;
@@ -489,7 +523,14 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForServer(Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            if (ClientConn != null) Send(ServerConn, message, deliveryMode, channel, false);
+            if (Instance.IsClient)
+            {
+                Send(ServerConn, message, deliveryMode, channel, false);
+            }
+            else
+            {
+                Debug.LogError("Client is not connected to the server. Use the OnClientConnected event to send initial messages.");
+            }
         }
 
         /// <summary>
@@ -564,8 +605,19 @@ namespace NitroNetwork.Core
         void GetConnectionClient(NitroBuffer buffer)
         {
             var connId = buffer.Read<int>();
+            var publicKey = buffer.Read<string>();
+            if (Client && Server)
+            {
+                Debug.LogError("Cliente setou o publicKey do servidor");
+                this.publicKey = publicKey;
+            }
+            var conn = new NitroConn
+            {
+                Id = connId,
 
-            ClientConn.Id = connId;
+            };
+            IsClient = true;
+            ClientConn = conn;
             OnClientConnected?.Invoke();
         }
 
@@ -607,10 +659,17 @@ namespace NitroNetwork.Core
                 Debug.LogError($"Prefab {namePrefab} not found in dictionary.");
             }
         }
-
         public static NitroBuffer Rent()
         {
             return bufferPool.Rent();
+        }
+        public static string GetPublicKey()
+        {
+            return Instance.publicKey;
+        }
+        public static string GetPrivateKey()
+        {
+            return Instance.privateKey;
         }
     }
 }

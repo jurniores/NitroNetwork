@@ -4,14 +4,19 @@ using System.Net.Sockets;
 using UnityEngine;
 using LiteNetLib;
 using LiteNetLib.Utils;
-using UnityEngine.Events;
+using System.Collections.Generic;
+using System.Collections;
 
 namespace NitroNetwork.Core
 {
     public class LiteTransporter : MonoBehaviour, INetEventListener, INetLogger, Transporter
     {
+        [ReadOnly]
+        [SerializeField]
+        private string guidConnect = "";
+        [SerializeField]
+        private float timeWaitConnectLan = 2f;
         private NetManager _netServer, _netClient;
-
         private NetDataWriter _dataWriter;
         private NitroManager nitroManager;
         public event Action<byte[], int, bool> OnMessage;
@@ -19,17 +24,22 @@ namespace NitroNetwork.Core
         public event Action<int, bool> OnDisconnected;
         public event Action<string> OnError;
         public event Action<NitroConn, bool> IPConnection;
-
         public bool SimulateLatency, SimulatePacketLoss;
         public int minLatence;
         public int maxLatence;
         public int SimulationPacketLossChance;
         int portServer = 0;
 
+
         void Start()
         {
 
             nitroManager = GetComponent<NitroManager>();
+        }
+
+        private void Reset()
+        {
+            guidConnect = System.Guid.NewGuid().ToString();
         }
 
         public void ServerConnect(string ip, int port)
@@ -49,8 +59,6 @@ namespace NitroNetwork.Core
                 _netServer.SimulatePacketLoss = SimulatePacketLoss;
                 _netServer.SimulationPacketLossChance = SimulationPacketLossChance;
 
-
-
                 NitroConn conn = new NitroConn();
                 conn.Id = -1;
                 conn.iPEndPoint = new IPEndPoint(IPAddress.Parse(ip), portServer);
@@ -62,14 +70,31 @@ namespace NitroNetwork.Core
                 OnError?.Invoke(e.Message);
             }
         }
-        public void ClientConnect(string ip, int port)
+        void InfoClient(int port)
         {
             portServer = port;
             _netClient = new NetManager(this);
             _netClient.UnconnectedMessagesEnabled = true;
             _netClient.UpdateTime = 15;
             _netClient.Start();
-            _netClient.Connect(ip, port, "sample_app");
+        }
+        public void ClientConnectLan(int port, Action actionLanValidation)
+        {
+            InfoClient(port);
+            _netClient.SendBroadcast(new byte[] { 1 }, port);
+            StartCoroutine(WaitAndInvoke());
+
+            IEnumerator WaitAndInvoke()
+            {
+                yield return new WaitForSeconds(timeWaitConnectLan);
+                actionLanValidation?.Invoke();
+            }
+
+        }
+        public void ClientConnect(string ip, int port)
+        {
+            InfoClient(port);
+            _netClient.Connect(ip, port, guidConnect);
         }
         public void Disconnect()
         {
@@ -107,11 +132,6 @@ namespace NitroNetwork.Core
             NitroConn conn = new NitroConn();
             conn.Id = peer.Id;
             conn.iPEndPoint = new IPEndPoint(peer.Address, peer.Port);
-
-            if (peer.Port == portServer)
-            {
-                IPConnected(conn, false);
-            }
             OnConnected?.Invoke(conn, peer.Port != portServer);
         }
 
@@ -123,7 +143,20 @@ namespace NitroNetwork.Core
         void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader,
             UnconnectedMessageType messageType)
         {
+            if (messageType == UnconnectedMessageType.Broadcast)
+            {
+                Debug.Log("[SERVER] Received discovery request. Send discovery response");
+                NetDataWriter resp = new NetDataWriter();
+                resp.Put(1);
+                _netServer.SendUnconnectedMessage(resp, remoteEndPoint);
+            }
 
+            if (messageType == UnconnectedMessageType.BasicMessage && _netClient.ConnectedPeersCount == 0 && reader.GetInt() == 1)
+            {
+                Debug.Log("[CLIENT] Received discovery response. Connecting to: " + remoteEndPoint);
+                StopAllCoroutines();
+                _netClient.Connect(remoteEndPoint, guidConnect);
+            }
         }
 
         void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency)
@@ -132,7 +165,7 @@ namespace NitroNetwork.Core
 
         void INetEventListener.OnConnectionRequest(ConnectionRequest request)
         {
-            request.AcceptIfKey("sample_app");
+            request.AcceptIfKey(guidConnect);
         }
 
         void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -172,8 +205,8 @@ namespace NitroNetwork.Core
         {
             if (IsServer)
             {
-                if(peerId == -1)return;
-                
+                if (peerId == -1) return;
+
                 var peer = _netServer.GetPeerById(peerId);
                 if (peer == null)
                 {

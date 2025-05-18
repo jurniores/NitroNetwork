@@ -6,6 +6,7 @@ public interface Transporter
 {
     public void ServerConnect(string ip, int port);
     public void ClientConnect(string ip, int port);
+    public void ClientConnectLan(int port, Action actionanValidation);
     public void DisconnectServer();
     public void DisconnectClient();
     public void DisconnectPeer(int peerId);
