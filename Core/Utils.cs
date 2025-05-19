@@ -24,13 +24,14 @@ namespace NitroNetwork.Core
     internal enum NitroCommands
     {
         GetConnection = 65334,
-        SendAES = 254,
-        CriptAes = 253,
-        Connecting = 255,
-        Connected = 252,
-        SpawnRPC = 255,
-        SpawnIdentity = 65535,
-        DespawnIdentity = 253,
+        ConfigsManager = 65535,
+        Connecting         = 255,
+        SendAES            = 254,
+        CriptAes           = 253,
+        Connected          = 252,
+        SpawnRPC           = 251,
+        DespawnIdentity    = 250,
+        Ping               = 249,     
 
     }
     public class AesResult

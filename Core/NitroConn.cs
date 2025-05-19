@@ -16,6 +16,8 @@ namespace NitroNetwork.Core
         /// Identificador único da conexão.
         /// </summary>
         public int Id;
+        public int countMsg = 0;
+        public ulong fase = 0;
 
         /// <summary>
         /// Endpoint IP associado a esta conexão.

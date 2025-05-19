@@ -28,7 +28,7 @@ public class NitroManagerEditor : Editor
             // Button to generate new RSA keys for NitroManager
             if (GUILayout.Button("Generate new keys"))
             {
-                NitroCriptografyRSA.GenerateKeys(out NitroManager.publicKey, out NitroManager.privateKey);
+                NitroCriptografyRSA.GenerateKeys(out manager.publicKey, out manager.privateKey);
                 EditorUtility.SetDirty(manager);
                 Debug.Log("New keys generated!");
             }

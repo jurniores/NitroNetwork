@@ -421,6 +421,9 @@ NitroManager.Instance.ConnectInLan;
 // These are keys used for game encryption
 NitroManager.publicKey;
 NitroManager.privateKey;
+// Disconnects a connection based on the number of messages sent per second.
+// This helps prevent speed hackers from exploiting the system.
+NitroManager.msgForDisconnectPeer;
 // Connects the client to a server
 NitroManager.ConnectClient("127.0.0.1", 7777);
 // Starts the server on the specified port

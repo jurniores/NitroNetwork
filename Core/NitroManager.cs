@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net.Sockets;
 using UnityEngine;
 using System.Threading.Tasks;
+using System.Collections;
+
 
 #if UNITY_EDITOR
 using UnityEditorInternal;
@@ -29,7 +31,8 @@ namespace NitroNetwork.Core
     [RequireComponent(typeof(LiteTransporter))]
     public class NitroManager : MonoBehaviour
     {
-        public static string publicKey, privateKey; // RSA keys for encryption
+        [ReadOnly]
+        public string publicKey, privateKey; // RSA keys for encryption
         internal static NitroBufferPool bufferPool; // Pool for NitroBuffer objects
         public Dictionary<string, NitroIdentity> nitroPrefabsDic = new(); // Prefab lookup by name
         public Dictionary<int, NitroConn> peers = new(); // Connected peers by ID
@@ -58,9 +61,10 @@ namespace NitroNetwork.Core
         public bool Server = true; // Should this instance act as server
         [HideIf(nameof(ConnectInLan))]
         public bool Client = true; // Should this instance act as client
-        [HideIf(nameof(ConnectInLan))]
-        static byte idClient = 0; // Client RPC ID counter
-        static byte idServer = 0; // Server RPC ID counter
+        [Range(1, 1000)]
+        public uint msgForDisconnectPeer = 60;
+
+        private ulong faseValidadeSpeed = 0;
 
         public List<NitroIdentity> nitroPrefabs = new(); // List of registered Nitro prefabs
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn; // Connection event callbacks
@@ -79,15 +83,16 @@ namespace NitroNetwork.Core
             ClientConn = null;
             bufferPool = new NitroBufferPool(32000);
             Instance = this;
-            idClient = 0;
-            idServer = 0;
 
             // Register default RPCs for server and client
             RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.SendAES), ReceiveKeyAesServerRPC);
-            RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.SpawnRPC), SpawnInClient);
-            RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.DespawnIdentity), DestroyIdentity);
+            RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Ping), PingServer);
+            //Rpcs Clientes
+            RpcsClient.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.SpawnRPC), SpawnInClient);
+            RpcsClient.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.DespawnIdentity), DestroyIdentity);
             RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connecting), GetConnectionClientRPC);
             RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connected), ClientConnectedClientRPC);
+            RpcsClient.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.Ping), PingClient);
 
             // Register Nitro prefabs
             foreach (var prefabs in nitroPrefabs)
@@ -125,6 +130,8 @@ namespace NitroNetwork.Core
             }
             DontDestroyOnLoad(gameObject);
         }
+
+
 
         /// <summary>
         /// Unity Reset lifecycle method (editor only).
@@ -170,7 +177,7 @@ namespace NitroNetwork.Core
         {
             await Task.Run(() =>
             {
-                NitroCriptografyRSA.GenerateKeys(out publicKey, out privateKey);
+                NitroCriptografyRSA.GenerateKeys(out Instance.publicKey, out Instance.privateKey);
             });
         }
 
@@ -440,9 +447,11 @@ namespace NitroNetwork.Core
         {
             if (IsRemote)
             {
+                Debug.Log($"Server connected in {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
                 IsServer = true;
                 ServerConn = conn;
                 ServerConn.keyAes = NitroCriptografyAES.GenerateKeys();
+                StartCoroutine(IESpeedHackValidate());
             }
         }
 
@@ -461,7 +470,7 @@ namespace NitroNetwork.Core
             if (IsServer)
             {
                 peers.TryGetValue(peerId, out var conn);
-
+                SpeedHackValidate(conn);
                 if (RpcsServer.TryGetValue((identityId, id), out var action))
                 {
                     action?.Invoke(buffer, conn);
@@ -498,7 +507,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            
+
             if (Instance.peers.Count == 0)
             {
                 Debug.LogWarning("No peers connected to send messages.");
@@ -506,7 +515,7 @@ namespace NitroNetwork.Core
             }
             if (conn != null && target == Target.Self)
             {
-                if(conn.keyAes == null) return;
+                if (conn.keyAes == null) return;
                 Send(conn, message, deliveryMode, channel, true);
                 return;
             }
@@ -520,7 +529,7 @@ namespace NitroNetwork.Core
             {
                 foreach (var (id, connRoom) in room.peersRoom)
                 {
-                    if(connRoom.keyAes == null) continue;
+                    if (connRoom.keyAes == null) continue;
                     if (target == Target.ExceptSelf && conn != null)
                     {
                         if (id == conn.Id && conn.Id != ServerConn.Id) continue;
@@ -542,7 +551,7 @@ namespace NitroNetwork.Core
         {
             if (Instance.IsClient)
             {
-                if(ServerConn.keyAes == null) return;
+                if (ServerConn.keyAes == null) return;
                 Send(ServerConn, message, deliveryMode, channel, false);
             }
             else
@@ -729,6 +738,30 @@ namespace NitroNetwork.Core
             OnClientConnected?.Invoke();
         }
 
+        private void SpeedHackValidate(NitroConn conn)
+        {
+            if (conn.countMsg > msgForDisconnectPeer && conn.fase == faseValidadeSpeed)
+            {
+                Debug.LogWarning($"Peer {conn.Id} disconnected for exceeding message limit ({conn.countMsg} > {msgForDisconnectPeer})");
+                DisconnectConn(conn);
+            }
+            if (conn.fase != faseValidadeSpeed)
+            {
+                conn.countMsg = 0;
+                conn.fase = faseValidadeSpeed;
+            }
+            conn.countMsg++;
+        }
+        private void PingServer(NitroBuffer buffer, NitroConn conn)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void PingClient(NitroBuffer buffer)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Rents a NitroBuffer from the pool.
         /// </summary>
@@ -742,7 +775,7 @@ namespace NitroNetwork.Core
         /// </summary>
         internal static string GetPublicKey()
         {
-            return publicKey;
+            return Instance.publicKey;
         }
 
         /// <summary>
@@ -750,7 +783,16 @@ namespace NitroNetwork.Core
         /// </summary>
         internal static string GetPrivateKey()
         {
-            return privateKey;
+            return Instance.privateKey;
+        }
+
+        IEnumerator IESpeedHackValidate()
+        {
+            while (true)
+            {
+                faseValidadeSpeed++;
+                yield return new WaitForSeconds(1f);
+            }
         }
     }
 }
