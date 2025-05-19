@@ -3,8 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Diagnostics;
+
 namespace NitroNetwork.Core
 {
+    /// <summary>
+    /// Represents a networked identity in the NitroNetwork framework.
+    /// This component is attached to GameObjects that participate in network synchronization.
+    /// Handles registration of RPCs, identity configuration, spawning, destruction, and room association.
+    /// </summary>
     [DefaultExecutionOrder(-99)] // Sets the execution order of this script in Unity
     public class NitroIdentity : MonoBehaviour
     {
@@ -27,9 +33,10 @@ namespace NitroNetwork.Core
         // Dictionaries for storing server and client RPCs
         public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
         private NitroBehaviour[] behaviours; // Array of child behaviors associated with this identity
+
         /// <summary>
         /// Called when the object is initialized.
-        /// Registers RPCs and configures the identity.
+        /// Registers RPCs for all NitroBehaviour children and configures the identity.
         /// </summary>
         void Awake()
         {
@@ -50,16 +57,19 @@ namespace NitroNetwork.Core
             {
                 SetConfig();
             }
-           
         }
 
+        /// <summary>
+        /// Sets the room associated with this identity.
+        /// </summary>
         internal void SetRoom(NitroRoom room)
         {
             roomName = room.Name;
             this.room = room;
         }
+
         /// <summary>
-        /// Configures the identity based on its current state.
+        /// Configures the identity and its child behaviours based on its current state.
         /// </summary>
         internal void SetConfig()
         {
@@ -71,6 +81,11 @@ namespace NitroNetwork.Core
                 nb.SetConfigs(this, IsServer, IsClient, IsMine);
             }
         }
+
+        /// <summary>
+        /// Called when the object is enabled.
+        /// Registers the spawn RPC for the server and sends a spawn request if client.
+        /// </summary>
         private void OnEnable()
         {
             if (IsServer) RpcServer.TryAdd((int)NitroCommands.SpawnRPC, OnInstantiated);
@@ -99,6 +114,11 @@ namespace NitroNetwork.Core
             IsMine = isMine;
             SetConfig();
         }
+
+        /// <summary>
+        /// Called when the identity is instantiated on the network.
+        /// Invokes OnInstantiated on all child NitroBehaviours.
+        /// </summary>
         internal void OnInstantiated(NitroBuffer buffer)
         {
             foreach (var nb in behaviours)
@@ -107,12 +127,12 @@ namespace NitroNetwork.Core
             }
             callConn = conn;
         }
+
         /// <summary>
         /// Spawns a new identity on the server and registers it.
         /// </summary>
         /// <param name="conn">The connection associated with the new identity.</param>
         /// <param name="room">The room where the identity will be spawned.</param>
-        /// <param name="target">The target audience for the spawn.</param>
         /// <returns>The newly spawned NitroIdentity.</returns>
         public NitroIdentity Spawn(NitroConn conn, NitroRoom room = null)
         {

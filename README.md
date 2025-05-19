@@ -128,13 +128,14 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 
 ### 🔧 NitroRPC Attribute Parameters
 
-| Parameter       | Type            | Default Value             | Description                                                                 |
-|-----------------|-----------------|---------------------------|-----------------------------------------------------------------------------|
-| `type`          | `NitroType`     | **Required**              | Specifies whether the RPC is for the `Server` or `Client`.                  |
-| `requiresOwner` | `bool`          | `true`                    | Indicates if the caller must own the object to invoke the RPC.              |
-| `target`        | `Target`        | `Target.All`              | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). Only for Client RPCs. |
-| `deliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered` | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).      |
-| `channel`       | `int`           | `0`                       | Specifies the communication channel for the RPC.                            |
+| Parameter       | Type            | Default Value                   | Description                                                                                       |
+|-----------------|-----------------|---------------------------------|---------------------------------------------------------------------------------------------------|
+| `type`          | `NitroType`     | **Required**                    | Specifies whether the RPC is for the `Server` or `Client`.                                        |
+| `requiresOwner` | `bool`          | `true`                          | Indicates if the caller must own the object to invoke the RPC.                                    |
+| `target`        | `Target`        | `Target.All`                    | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). **Only used for `NitroType.Client` RPCs.** |
+| `deliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered`  | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).                            |
+| `channel`       | `int`           | `0`                             | Specifies the communication channel for the RPC.                                                  |
+| `criptograde`   | `bool`          | `false`                         | If `true`, the message will be encrypted before being sent.                                       |
 
 ---
 
@@ -414,8 +415,8 @@ NitroManager.Instance.Client;
 // Connects in LAN mode (likely initializes the LAN network). Searches for a local server; if none exists, creates one.
 NitroManager.Instance.ConnectInLan;
 // These are keys used for game encryption
-NitroManager.Instance.publicKey;
-NitroManager.Instance.privateKey;
+NitroManager.publicKey;
+NitroManager.privateKey;
 // Connects the client to a server
 NitroManager.ConnectClient("127.0.0.1", 7777);
 // Starts the server on the specified port

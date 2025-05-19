@@ -17,8 +17,8 @@ public class ResetStringOnBuild : IPreprocessBuildWithReport, IPostprocessBuildW
         NitroManager nitroManager = GameObject.FindFirstObjectByType<NitroManager>();
         if (nitroManager != null && nitroManager.Client)
         {
-            backupPrivateKey = nitroManager.privateKey;
-            nitroManager.privateKey = "";
+            backupPrivateKey = NitroManager.privateKey;
+            NitroManager.privateKey = "";
             EditorUtility.SetDirty(nitroManager);
 
             // Salva o caminho da cena atual
@@ -39,7 +39,7 @@ public class ResetStringOnBuild : IPreprocessBuildWithReport, IPostprocessBuildW
             NitroManager nitroManager = GameObject.FindFirstObjectByType<NitroManager>();
             if (nitroManager != null)
             {
-                nitroManager.privateKey = backupPrivateKey;
+                NitroManager.privateKey = backupPrivateKey;
 
                 EditorUtility.SetDirty(nitroManager);
                 EditorSceneManager.MarkSceneDirty(scene);

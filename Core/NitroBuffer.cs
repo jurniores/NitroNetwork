@@ -39,7 +39,8 @@ namespace NitroNetwork.Core
             buffer = new byte[1024];
         }
         /// <summary>
-        /// Writes a string to the buffer using UTF-8 encoding and null termination.
+        /// Writes a string to the buffer using UTF-8 encoding, prefixing with the length in 2 bytes.
+        /// If the string is null or empty, writes two zero bytes.
         /// </summary>
         /// <param name="txt">The string to write.</param>
         private void WriteString(string txt)
@@ -64,6 +65,11 @@ namespace NitroNetwork.Core
 
             tam += bytesWritten;
         }
+        /// <summary>
+        /// Writes a byte array to the buffer, prefixing with the length in 2 bytes.
+        /// If the array is null or empty, writes two zero bytes.
+        /// </summary>
+        /// <param name="bytes">The byte array to write.</param>
         private void WriteBytes(byte[] bytes)
         {
             if (bytes == null || bytes.Length == 0)

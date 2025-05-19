@@ -5,31 +5,66 @@ using System.Net;
 
 namespace NitroNetwork.Core
 {
+    /// <summary>
+    /// Representa uma conexão de rede (peer) no framework NitroNetwork.
+    /// Armazena metadados da conexão, salas associadas, identidades de rede, dados customizados e chaves de criptografia.
+    /// Fornece métodos para gerenciar salas e identidades vinculadas a esta conexão.
+    /// </summary>
     public class NitroConn
     {
-        public int Id; // Unique identifier for the connection
-        public IPEndPoint iPEndPoint; // IP endpoint associated with this connection
-        public Dictionary<string, NitroRoom> rooms = new(); // Dictionary of rooms associated with this connection
-        public Dictionary<int, NitroIdentity> identities = new(); // Dictionary of identities to be destroyed when the connection is terminated
-        public Dictionary<object, object> customData = new(); // Dictionary for storing custom data associated with this connection
-        public byte[] keyAes;
         /// <summary>
-        /// Adds an identity to the list of identities associated with this connection.
+        /// Identificador único da conexão.
         /// </summary>
-        /// <param name="identity">The identity to add.</param>
+        public int Id;
+
+        /// <summary>
+        /// Endpoint IP associado a esta conexão.
+        /// </summary>
+        public IPEndPoint iPEndPoint;
+
+        /// <summary>
+        /// Salas associadas a esta conexão.
+        /// </summary>
+        public Dictionary<string, NitroRoom> rooms = new();
+
+        /// <summary>
+        /// Identidades de rede a serem destruídas quando a conexão for encerrada.
+        /// </summary>
+        public Dictionary<int, NitroIdentity> identities = new();
+
+        /// <summary>
+        /// Dados customizados associados a esta conexão.
+        /// </summary>
+        public Dictionary<object, object> customData = new();
+
+        /// <summary>
+        /// Chave AES para comunicação criptografada.
+        /// </summary>
+        public byte[] keyAes;
+
+        /// <summary>
+        /// Adiciona uma identidade à lista de identidades associadas a esta conexão.
+        /// </summary>
+        /// <param name="identity">A identidade a ser adicionada.</param>
         public void AddIdentity(NitroIdentity identity)
         {
             identities.Add(identity.Id, identity);
         }
+
+        /// <summary>
+        /// Remove uma identidade da lista de identidades associadas a esta conexão.
+        /// </summary>
+        /// <param name="identity">A identidade a ser removida.</param>
         public void RemoveIdentity(NitroIdentity identity)
         {
             identities.Remove(identity.Id);
         }
+
         /// <summary>
-        /// Adds a room to the list of rooms associated with this connection.
+        /// Adiciona uma sala à lista de salas associadas a esta conexão.
         /// </summary>
-        /// <param name="room">The room to add.</param>
-        /// <returns>True if the room was successfully added; otherwise, false.</returns>
+        /// <param name="room">A sala a ser adicionada.</param>
+        /// <returns>True se a sala foi adicionada com sucesso; caso contrário, false.</returns>
         internal bool AddRoom(NitroRoom room)
         {
             if (rooms.TryAdd(room.Name, room))
@@ -38,12 +73,13 @@ namespace NitroNetwork.Core
             }
             else
             {
-                NitroLogs.LogWarning($"Failed to add room {room.Name} to peer {Id}");
+                NitroLogs.LogWarning($"Falha ao adicionar sala {room.Name} ao peer {Id}");
             }
             return false;
         }
+
         /// <summary>
-        /// Removes all rooms associated with this connection.
+        /// Remove todas as salas associadas a esta conexão.
         /// </summary>
         internal void LeaveAllRooms()
         {
@@ -54,22 +90,24 @@ namespace NitroNetwork.Core
             }
             rooms.Clear();
         }
+
         /// <summary>
-        /// Removes a specific room from the list of rooms associated with this connection.
+        /// Remove uma sala específica da lista de salas associadas a esta conexão.
         /// </summary>
-        /// <param name="room">The room to remove.</param>
-        /// <returns>True if the room was successfully removed; otherwise, false.</returns>
+        /// <param name="room">A sala a ser removida.</param>
+        /// <returns>True se a sala foi removida com sucesso; caso contrário, false.</returns>
         internal bool RemoveRoom(NitroRoom room)
         {
             if (rooms.Remove(room.Name))
             {
                 return true;
             }
-            NitroLogs.LogWarning($"Failed to remove room {room.Name} from peer {Id}");
+            NitroLogs.LogWarning($"Falha ao remover sala {room.Name} do peer {Id}");
             return false;
         }
+
         /// <summary>
-        /// Destroys all identities associated with this connection.
+        /// Destroi todas as identidades associadas a esta conexão e limpa os dados customizados.
         /// </summary>
         internal void DestroyAllIdentities()
         {

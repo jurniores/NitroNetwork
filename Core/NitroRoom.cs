@@ -96,6 +96,10 @@ namespace NitroNetwork.Core
             return false;
         }
 
+        /// <summary>
+        /// Removes a peer from the room without destroying identities.
+        /// </summary>
+        /// <param name="conn">The connection to remove.</param>
         internal void RemoveConn(NitroConn conn)
         {
             if (peersRoom.ContainsKey(conn.Id))
