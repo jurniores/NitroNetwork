@@ -31,8 +31,7 @@ namespace NitroNetwork.Core
             _pool = new Queue<NitroBuffer>();
             for (int i = 0; i < poolSize; i++)
             {
-
-                _pool.Enqueue(new NitroBuffer(capacity));
+                _pool.Enqueue(new NitroBuffer(capacity, i));
             }
 
         }
@@ -48,7 +47,7 @@ namespace NitroNetwork.Core
             else
             {
 
-                return new NitroBuffer(DefaultCapacity);
+                return new NitroBuffer(DefaultCapacity, _pool.Count + 1);
             }
         }
 

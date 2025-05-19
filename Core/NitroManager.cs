@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using UnityEngine;
+using System.Threading.Tasks;
+
 
 
 #if UNITY_EDITOR
@@ -20,7 +22,7 @@ namespace NitroNetwork.Core
         public Dictionary<string, NitroIdentity> nitroPrefabsDic = new();
         public Dictionary<int, NitroConn> peers = new();
         public Dictionary<string, NitroRoom> rooms = new();
-        internal Dictionary<(int, byte), Action<NitroBuffer>> RpcsServer = new();
+        internal Dictionary<(int, byte), Action<NitroBuffer, NitroConn>> RpcsServer = new();
         internal Dictionary<(int, byte), Action<NitroBuffer>> RpcsClient = new();
         public Dictionary<string, byte> IdRpcServers = new();
         public Dictionary<string, byte> IdRpcClients = new();
@@ -52,7 +54,7 @@ namespace NitroNetwork.Core
         /// Called when the object is initialized.
         /// Sets up the NitroManager instance and initializes network components.
         /// </summary>
-        private void Awake()
+        private async void Awake()
         {
             OnClientConnected = null;
             OnConnectConn = null;
@@ -63,11 +65,16 @@ namespace NitroNetwork.Core
             Instance = this;
             idClient = 0;
             idServer = 0;
+
+            // Register default RPCs for the Server
+            //RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.CriptAes), ReceveiCriptoAes);
+            RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.SendAES), ReceiveKeyAes);
             // Register default RPCs for the client
             RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.SpawnRPC), SpawnInClient);
-            RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.DespawnIdentity), DestroyBuffer);
-            RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connected), GetConnectionClient);
-            Debug.LogError("Chave key " + privateKey);
+            RpcsClient.Add(((int)NitroCommands.SpawnIdentity, (byte)NitroCommands.DespawnIdentity), DestroyIdentity);
+            RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connecting), GetConnectionClient);
+            RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connected), ClientConnected);
+
             // Add Nitro prefabs to the dictionary
             foreach (var prefabs in nitroPrefabs)
             {
@@ -76,22 +83,23 @@ namespace NitroNetwork.Core
                     Debug.LogError($"Failed to add prefab {prefabs.name} to dictionary.");
                 }
             }
-
             // Initialize the transporter and set up event handlers
             transporter = GetComponentInChildren<Transporter>(true);
             transporter.OnConnected += OnPeerConnected;
             transporter.OnDisconnected += OnPeerDisconnected;
             transporter.OnError += OnError;
-            transporter.IPConnection += RecieveIPEndPoint;
-            
-            if (Client && Server)
+            transporter.IPConnection += ReceiveIPEndPoint;
+
+            if (Client && Server || ConnectInLan)
             {
-                NitroCriptografy.GenerateKeys(out publicKey, out privateKey);
+                await GenerateKeys();
             }
             if (ConnectInLan)
             {
                 ConnectClientLan(port, () =>
                 {
+                    IsServer = true;
+                    IsClient = true;
                     ValidateConnect();
                 });
             }
@@ -99,19 +107,19 @@ namespace NitroNetwork.Core
             {
                 ValidateConnect();
             }
-
-
             // Prevent this object from being destroyed when loading new scenes
             DontDestroyOnLoad(gameObject);
         }
 
+
+
         /// <summary>
         /// Ensures the LiteTransporter component is moved below NitroManager in the Inspector.
         /// </summary>
-        private void Reset()
+        private async void Reset()
         {
 #if UNITY_EDITOR
-            NitroCriptografy.GenerateKeys(out publicKey, out privateKey);
+            await GenerateKeys();
             var liteTransporter = GetComponent<LiteTransporter>();
             var nitroManager = GetComponent<NitroManager>();
 
@@ -136,6 +144,15 @@ namespace NitroNetwork.Core
             {
                 ConnectClient(address, port);
             }
+        }
+
+        public static async Task GenerateKeys()
+        {
+            await Task.Run(() =>
+            {
+                NitroCriptografyRSA.GenerateKeys(out Instance.publicKey, out Instance.privateKey);
+            }); // Wait for the key generation to complete
+
         }
         /// <summary>
         /// Starts the server on the specified port.
@@ -189,35 +206,6 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Registers an RPC method for a NitroIdentity.
         /// </summary>
-        internal static void RegisterRPC(Action<NitroBuffer> action, NitroType type, NitroIdentity identity)
-        {
-            if (type == NitroType.Server)
-            {
-                if (Instance.RpcsServer.TryAdd((identity.Id, idServer), action))
-                {
-                    Instance.IdRpcServers.TryAdd(action.Method.Name, idServer);
-                }
-                else
-                {
-                    Debug.LogError($"RPC {action.Method.Name} no regristed for server identity {identity.Id}");
-                }
-                idServer++;
-
-            }
-            else if (type == NitroType.Client)
-            {
-
-                if (Instance.RpcsClient.TryAdd((identity.Id, idClient), action))
-                {
-                    Instance.IdRpcClients.TryAdd(action.Method.Name, idClient);
-                }
-                else
-                {
-                    Debug.LogError($"RPC {action.Method.Name} no regristed for client identity {identity.Id}");
-                }
-                idClient++;
-            }
-        }
 
         /// <summary>
         /// Registers a NitroIdentity with the manager.
@@ -317,22 +305,16 @@ namespace NitroNetwork.Core
             }
             else
             {
-                ServerConn = new NitroConn
-                {
-                    Id = -1,
-                    iPEndPoint = conn.iPEndPoint
-                };
-                foreach (var identity in identitiesClient)
-                {
-                    identity.Value.SetConfig();
-                }
+                if (ServerConn == null) ServerConn = new NitroConn();
+                ServerConn.Id = -1;
+                ServerConn.iPEndPoint = conn.iPEndPoint;
                 Debug.Log($"Peer {conn.Id} connected from server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
             }
 
             void SendInfoInitialForClient()
             {
-                var buffer = new NitroBuffer();
-                buffer.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
+                using var buffer = Rent();
+                buffer.SetInfo((byte)NitroCommands.Connecting, (int)NitroCommands.GetConnection);
                 buffer.Write(conn.Id);
                 buffer.Write(publicKey);
                 Send(conn, buffer.Buffer, DeliveryMode.ReliableOrdered, 0);
@@ -376,7 +358,7 @@ namespace NitroNetwork.Core
             {
                 Name = name,
                 autoDestroy = autoDestroy,
-                Id = (int)Instance.rooms.Count,
+                Id = Instance.rooms.Count,
             };
             if (Instance.rooms.TryAdd(name, room))
             {
@@ -409,8 +391,6 @@ namespace NitroNetwork.Core
 
         internal static void Send(NitroConn conn, Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0, bool IsServer = true)
         {
-
-
             Instance.transporter.Send(conn.Id, message, deliveryMode, channel, IsServer);
         }
         /// <summary>
@@ -424,37 +404,38 @@ namespace NitroNetwork.Core
                 Debug.Log($"Room {room.Name} removed from manager.");
             }
         }
-        void RecieveIPEndPoint(NitroConn conn, bool IsRemote)
+        void ReceiveIPEndPoint(NitroConn conn, bool IsRemote)
         {
             if (IsRemote)
             {
                 IsServer = true;
                 ServerConn = conn;
-                Debug.Log($"Connected to server at {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
+                ServerConn.keyAes = NitroCriptografyAES.GenerateKeys();
             }
-
         }
 
         /// <summary>
         /// Handles incoming messages from peers.
         /// </summary>
-        internal void Recieve(ReadOnlySpan<byte> message, int peerId, bool IsServer)
+        internal void ReceiveMessage(ReadOnlySpan<byte> message, int peerId, bool IsServer)
         {
             byte id = message[0];
             int identityId = (message[1] & 0xFF) | ((message[2] & 0xFF) << 8) | ((message[3] & 0xFF) << 16) | ((message[4] & 0xFF) << 24);
             using var buffer = Rent();
 
             buffer.WriteForRead(message);
+            buffer.Length = message.Length;
 
             if (IsServer)
             {
+                peers.TryGetValue(peerId, out var conn);
+
                 if (RpcsServer.TryGetValue((identityId, id), out var action))
                 {
-                    action?.Invoke(buffer);
+                    action?.Invoke(buffer, conn);
                     return;
                 }
 
-                peers.TryGetValue(peerId, out var conn);
                 identitiesServer.TryGetValue(identityId, out var identity);
 
                 if (identity != null)
@@ -562,7 +543,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Destroys a buffer and removes the associated identity.
         /// </summary>
-        void DestroyBuffer(NitroBuffer buffer)
+        void DestroyIdentity(NitroBuffer buffer)
         {
 
             var identityId = buffer.Read<int>();
@@ -606,18 +587,61 @@ namespace NitroNetwork.Core
         {
             var connId = buffer.Read<int>();
             var publicKey = buffer.Read<string>();
-            if (Client && Server)
-            {
-                Debug.LogError("Cliente setou o publicKey do servidor");
-                this.publicKey = publicKey;
-            }
+
+            if (Client && Server || ConnectInLan) this.publicKey = publicKey;
+
             var conn = new NitroConn
             {
                 Id = connId,
-
             };
-            IsClient = true;
+
             ClientConn = conn;
+            //Generate AES key for encryption
+            byte[] keyAes = NitroCriptografyAES.GenerateKeys();
+            ClientConn.keyAes = keyAes;
+
+            using var bufferAes = Rent();
+            bufferAes.SetInfo((byte)NitroCommands.SendAES, (int)NitroCommands.GetConnection);
+            bufferAes.Write(keyAes);
+            bufferAes.EncriptRSA(GetPublicKey());
+            Send(conn, bufferAes.Buffer, DeliveryMode.ReliableOrdered, 0, false);
+
+        }
+
+        async void ReceiveKeyAes(NitroBuffer buffer, NitroConn conn)
+        {
+            NitroBuffer bufferNew = new()
+            {
+                buffer = buffer.buffer,
+                Length = buffer.Length
+            };
+            await Task.Run(() =>
+            {
+                bufferNew.DecryptRSA(GetPrivateKey());
+            });
+            var keyAes = bufferNew.Read<byte[]>();
+            if (keyAes == null || keyAes.Length == 0)
+            {
+                Debug.LogError("Received empty AES key.");
+                return;
+            }
+            conn.keyAes = keyAes;
+            var bufferSend = Rent();
+            bufferSend.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
+            bufferSend.Write(ServerConn.keyAes);
+            bufferSend.EncriptAes(conn.keyAes);
+            Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
+        }
+        private void ClientConnected(NitroBuffer buffer)
+        {
+            buffer.DecryptAes(ClientConn.keyAes);
+            var serverAes = buffer.Read<byte[]>();
+            ServerConn.keyAes = serverAes;
+            IsClient = true;
+            foreach (var identity in identitiesClient)
+            {
+                identity.Value.SetConfig();
+            }
             OnClientConnected?.Invoke();
         }
 
@@ -652,7 +676,6 @@ namespace NitroNetwork.Core
                 identity.transform.position = pos;
                 identity.transform.rotation = Quaternion.Euler(rot);
                 identity.gameObject.SetActive(true);
-                //Instance.identitiesServer.TryAdd(identityId, identity);
             }
             else
             {

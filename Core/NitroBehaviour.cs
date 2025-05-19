@@ -34,11 +34,11 @@ namespace NitroNetwork.Core
                     return;
                 }
             }
-            
+
             NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, target: target, deliveryMode: deliveryMode, channel: channel);
             Identity.callConn = Identity.conn;
         }
-        protected internal virtual void OnInstantiated(){}
+        protected internal virtual void OnInstantiated() { }
         protected internal virtual void __RegisterMyRpcServer(Dictionary<int, Action<NitroBuffer>> RpcServer)
         {
             __tamRpcS = RpcServer.Count;
@@ -46,6 +46,10 @@ namespace NitroNetwork.Core
         protected internal virtual void __RegisterMyRpcClient(Dictionary<int, Action<NitroBuffer>> RpcClient)
         {
             __tamRpcC = RpcClient.Count;
+        }
+        protected void __DebugLog(string message)
+        {
+            Debug.Log($"[NitroBehaviour] {message}");
         }
     }
 }

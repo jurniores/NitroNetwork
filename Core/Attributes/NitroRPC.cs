@@ -24,6 +24,8 @@ namespace NitroNetwork.Core
         /// </summary>
         public bool requiresOwner = true;
 
+        public bool criptograde = false;
+
         /// <summary>
         /// Specifies the target audience for the RPC, for Client RPC.
         /// Default is <see cref="Target.All"/>.

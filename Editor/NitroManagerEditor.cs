@@ -1,8 +1,8 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
-
-[CustomEditor(typeof(NitroNetwork.Core.NitroManager))]
+using NitroNetwork.Core;
+[CustomEditor(typeof(NitroManager))]
 public class NitroManagerEditor : Editor
 {
     public override void OnInspectorGUI()
@@ -12,14 +12,14 @@ public class NitroManagerEditor : Editor
         // Só mostra o botão se apenas um objeto estiver selecionado
         if (!serializedObject.isEditingMultipleObjects)
         {
-            NitroNetwork.Core.NitroManager manager = (NitroNetwork.Core.NitroManager)target;
+            NitroManager manager = (NitroManager)target;
 
             GUILayout.Space(10);
-            if (GUILayout.Button("Gerar novas chaves"))
+            if (GUILayout.Button("Generate new keys"))
             {
-                NitroCriptografy.GenerateKeys(out manager.publicKey, out manager.privateKey);
+                NitroCriptografyRSA.GenerateKeys(out manager.publicKey, out manager.privateKey);
                 EditorUtility.SetDirty(manager);
-                Debug.Log("Novas chaves geradas!");
+                Debug.Log("New keys generated!");
             }
         }
         else

@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using MemoryPack;
 
 namespace NitroNetwork.Core
@@ -16,8 +17,8 @@ namespace NitroNetwork.Core
         /// The internal buffer for writing data.
         /// </summary>
         [NonSerialized]
-        internal byte[] buffer;
-
+        public byte[] buffer;
+        public int ID;
         /// <summary>
         /// Gets a span representing the valid data in the buffer.
         /// </summary>
@@ -27,9 +28,10 @@ namespace NitroNetwork.Core
         /// Current position in the buffer. Starts at 3 to reserve space for
         /// command ID and identity ID in the first bytes.
         /// </summary>
-        internal int tam = 5;
-        public NitroBuffer(int capacity)
+        public int tam = 5, Length;
+        public NitroBuffer(int capacity, int id)
         {
+            ID = id;
             buffer = new byte[capacity];
         }
         public NitroBuffer()
@@ -62,7 +64,24 @@ namespace NitroNetwork.Core
 
             tam += bytesWritten;
         }
+        private void WriteBytes(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0)
+            {
+                buffer[tam++] = 0;
+                buffer[tam++] = 0;
+                return;
+            }
 
+            ushort byteCount = (ushort)bytes.Length;
+            buffer[tam++] = (byte)(byteCount & 0xFF);
+            buffer[tam++] = (byte)((byteCount >> 8) & 0xFF);
+
+            Span<byte> targetSpan = buffer.AsSpan(tam, byteCount);
+            bytes.CopyTo(targetSpan);
+
+            tam += byteCount;
+        }
         /// <summary>
         /// Writes a complex object to the buffer using MemoryPack serialization.
         /// Uses 0x1E as a record separator to mark the end of the serialized data.
@@ -100,11 +119,17 @@ namespace NitroNetwork.Core
                 WriteString(Convert.ChangeType(p1, typeof(string)) as string);
                 return;
             }
+            if (typeof(P) == typeof(byte[]))
+            {
+                WriteBytes(p1 as byte[]);
+                return;
+            }
             if (!typeof(P).IsValueType || !typeof(P).IsLayoutSequential && !typeof(P).IsExplicitLayout)
             {
                 WriteClass(p1);
                 return;
             }
+
             int size_t = Marshal.SizeOf<P>();
 
             // Check if there's enough space in the buffer
@@ -156,6 +181,11 @@ namespace NitroNetwork.Core
                 object txt = ReadString();
                 return (T)txt;
             }
+            if (typeof(T) == typeof(byte[]))
+            {
+                object bytes = ReadBytes();
+                return (T)bytes;
+            }
 
             if (!typeof(T).IsValueType || !typeof(T).IsLayoutSequential && !typeof(T).IsExplicitLayout)
             {
@@ -190,17 +220,11 @@ namespace NitroNetwork.Core
                 string errorMsg = $"Error reading {typeof(T).Name}: {ex.Message}";
                 NitroLogs.LogError(errorMsg);
 
-                // Show bytes in the region to help with debugging
-                int startPos = Math.Max(0, tam - 10);
-                int length = Math.Min(buffer.Length - startPos, tam + size + 10 - startPos);
-                byte[] contextBytes = new byte[length];
-                Array.Copy(buffer, startPos, contextBytes, 0, length);
 
-                NitroLogs.LogError($"Context (bytes from position {startPos}): {BitConverter.ToString(contextBytes)}");
+                NitroLogs.LogError("If you are sending a struct, only send with primitive types, or use classes with MemoryPack");
                 throw;
             }
         }
-
         /// <summary>
         /// Reads a complex object from the buffer using MemoryPack deserialization.
         /// Looks for the 0x1E record separator to determine the end of the serialized data.
@@ -221,8 +245,6 @@ namespace NitroNetwork.Core
             tam += 2 + size;
             return t;
         }
-
-
         private byte[] ReadBuffer()
         {
             Span<byte> span = buffer.AsSpan(tam);
@@ -232,7 +254,6 @@ namespace NitroNetwork.Core
             tam += 2 + size;
             return span.Slice(2, size).ToArray();
         }
-
         private ReadOnlySpan<byte> ReadSpan()
         {
             Span<byte> span = buffer.AsSpan(tam);
@@ -249,15 +270,6 @@ namespace NitroNetwork.Core
         /// <exception cref="FormatException">Thrown when the null terminator is not found.</exception>
         private string ReadString()
         {
-            //  Span<byte> bSpan = buffer.AsSpan(tam);
-
-            // ushort size = (ushort)((bSpan[0] & 0xFF) | ((bSpan[1] & 0xFF) << 8));
-            // if (size == 0)
-            //     return default;
-
-            // T t = MemoryPackSerializer.Deserialize<T>(bSpan.Slice(2, size));
-            // tam += 2 + size;
-            // return t;
             Span<byte> bSpan = buffer.AsSpan(tam);
 
             ushort size = (ushort)((bSpan[0] & 0xFF) | ((bSpan[1] & 0xFF) << 8));
@@ -270,27 +282,70 @@ namespace NitroNetwork.Core
 
             return result;
         }
+        private byte[] ReadBytes()
+        {
+            Span<byte> bSpan = buffer.AsSpan(tam);
 
+            ushort size = (ushort)((bSpan[0] & 0xFF) | ((bSpan[1] & 0xFF) << 8));
+            if (size == 0)
+                return null;
+
+            byte[] result = bSpan.Slice(2, size).ToArray();
+
+            tam += 2 + size;
+
+            return result;
+        }
         /// <summary>
         /// Resets the buffer position to prepare for reuse.
         /// </summary>
         public void Dispose()
         {
             tam = 5;
+            Length = 0;
             NitroManager.bufferPool.Return(this);
         }
-
-        public void EncriptRSA(string publicKey)
+        internal void EncriptRSA(string publicKey)
         {
-            buffer = NitroCriptografy.Encrypt(publicKey, Buffer.ToArray());
+            var bufferCripto = NitroCriptografyRSA.Encrypt(publicKey, Buffer.ToArray());
+            bufferCripto.CopyTo(buffer.AsSpan(5, bufferCripto.Length));
+            tam = 5 + bufferCripto.Length;
         }
-
-        public void DecryptRSA(string privateKey)
+        internal void DecryptRSA(string privateKey)
         {
-            var bytes = NitroCriptografy.Decrypt(privateKey, buffer);
+            ReadOnlySpan<byte> bytes;
+            bytes = NitroCriptografyRSA.Decrypt(privateKey, buffer.AsSpan(5, tam > 5 ? tam - 5 : Length - 5).ToArray());
             tam = 5;
             WriteForRead(bytes);
         }
+        public AesResult EncriptAes(byte[] key)
+        {
+            var result = NitroCriptografyAES.Encrypt(buffer.AsSpan(5, tam - 5).ToArray(), key);
+            result.IV.CopyTo(buffer.AsSpan(5, result.IV.Length));
+            tam = 5 + result.IV.Length;
+            UnityEngine.Debug.Log("ID " + ID + " Tam " + tam + " Length " + Length + " buffer" + BitConverter.ToString(buffer) + " Encripted" + BitConverter.ToString(result.EncryptedData) + " IV" + BitConverter.ToString(result.IV));
+
+            result.EncryptedData.CopyTo(buffer.AsSpan(tam, result.EncryptedData.Length));
+            tam += result.EncryptedData.Length;
+            return result;
+        }
+        public void DecryptAes(byte[] key)
+        {
+            int sizeIV = 16;
+            int sizeEncriptadData = Length - tam - sizeIV;
+            byte[] IV = buffer.AsSpan(tam, sizeIV).ToArray();
+            byte[] encryptedData = buffer.AsSpan(tam + sizeIV, sizeEncriptadData).ToArray();
+            var aesResult = new AesResult
+            {
+                IV = IV,
+                EncryptedData = encryptedData
+            };
+
+            var bufferDecript = NitroCriptografyAES.Decrypt(aesResult.EncryptedData, key, aesResult.IV);
+            bufferDecript.CopyTo(buffer.AsSpan(5, bufferDecript.Length));
+
+        }
+
     }
 }
 

@@ -18,7 +18,7 @@ namespace NitroNetwork.Core
         public int Id; // Unique identifier for this identity
         [SerializeField]
         private bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
-        public string roomName;
+        protected string roomName;
         // Connections associated with this identity
         public NitroConn conn, callConn;
 

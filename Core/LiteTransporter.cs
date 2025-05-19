@@ -145,7 +145,6 @@ namespace NitroNetwork.Core
         {
             if (messageType == UnconnectedMessageType.Broadcast)
             {
-                Debug.Log("[SERVER] Received discovery request. Send discovery response");
                 NetDataWriter resp = new NetDataWriter();
                 resp.Put(1);
                 _netServer.SendUnconnectedMessage(resp, remoteEndPoint);
@@ -153,7 +152,6 @@ namespace NitroNetwork.Core
 
             if (messageType == UnconnectedMessageType.BasicMessage && _netClient.ConnectedPeersCount == 0 && reader.GetInt() == 1)
             {
-                Debug.Log("[CLIENT] Received discovery response. Connecting to: " + remoteEndPoint);
                 StopAllCoroutines();
                 _netClient.Connect(remoteEndPoint, guidConnect);
             }
@@ -175,7 +173,7 @@ namespace NitroNetwork.Core
 
         void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod)
         {
-            nitroManager.Recieve(reader.GetRemainingBytesSpan(), peer.Id, peer.Port != portServer);
+            nitroManager.ReceiveMessage(reader.GetRemainingBytesSpan(), peer.Id, peer.Port != portServer);
         }
 
         void INetLogger.WriteNet(NetLogLevel level, string str, params object[] args)

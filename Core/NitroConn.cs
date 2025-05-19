@@ -12,6 +12,7 @@ namespace NitroNetwork.Core
         public Dictionary<string, NitroRoom> rooms = new(); // Dictionary of rooms associated with this connection
         public Dictionary<int, NitroIdentity> identities = new(); // Dictionary of identities to be destroyed when the connection is terminated
         public Dictionary<object, object> customData = new(); // Dictionary for storing custom data associated with this connection
+        public byte[] keyAes;
         /// <summary>
         /// Adds an identity to the list of identities associated with this connection.
         /// </summary>
