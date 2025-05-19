@@ -329,8 +329,6 @@ namespace NitroNetwork.Core
             var result = NitroCriptografyAES.Encrypt(buffer.AsSpan(5, tam - 5).ToArray(), key);
             result.IV.CopyTo(buffer.AsSpan(5, result.IV.Length));
             tam = 5 + result.IV.Length;
-            UnityEngine.Debug.Log("ID " + ID + " Tam " + tam + " Length " + Length + " buffer" + BitConverter.ToString(buffer) + " Encripted" + BitConverter.ToString(result.EncryptedData) + " IV" + BitConverter.ToString(result.IV));
-
             result.EncryptedData.CopyTo(buffer.AsSpan(tam, result.EncryptedData.Length));
             tam += result.EncryptedData.Length;
             return result;

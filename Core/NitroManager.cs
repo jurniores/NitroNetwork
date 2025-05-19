@@ -498,7 +498,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            if(conn != null && conn.keyAes == null) return;
+            
             if (Instance.peers.Count == 0)
             {
                 Debug.LogWarning("No peers connected to send messages.");
@@ -506,6 +506,7 @@ namespace NitroNetwork.Core
             }
             if (conn != null && target == Target.Self)
             {
+                if(conn.keyAes == null) return;
                 Send(conn, message, deliveryMode, channel, true);
                 return;
             }
@@ -519,6 +520,7 @@ namespace NitroNetwork.Core
             {
                 foreach (var (id, connRoom) in room.peersRoom)
                 {
+                    if(connRoom.keyAes == null) continue;
                     if (target == Target.ExceptSelf && conn != null)
                     {
                         if (id == conn.Id && conn.Id != ServerConn.Id) continue;
@@ -540,6 +542,7 @@ namespace NitroNetwork.Core
         {
             if (Instance.IsClient)
             {
+                if(ServerConn.keyAes == null) return;
                 Send(ServerConn, message, deliveryMode, channel, false);
             }
             else
