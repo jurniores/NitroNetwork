@@ -25,6 +25,7 @@ public partial class ConnectPeers : NitroBehaviour
 {
     void Update()
     {
+        // Press the spacebar on the keyboard
         if (IsClient && Input.GetKeyDown(KeyCode.Space))
         {
             CallConnectToServer();
