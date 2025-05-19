@@ -23,11 +23,13 @@ using UnityEngine;
 [RequireComponent(typeof(NitroStatic))]
 public partial class ConnectPeers : NitroBehaviour
 {
-    void Start()
+    void Update()
     {
-        CallConnectToServer(); // This will send an RPC to the server.
+        if (IsClient && Input.GetKeyDown(KeyCode.Space))
+        {
+            CallConnectToServer();
+        }
     }
-
     // RPC method that will be executed on the server when called by a client.
     [NitroRPC(NitroType.Server)]
     void ConnectToServer()
@@ -35,6 +37,7 @@ public partial class ConnectPeers : NitroBehaviour
         Debug.Log("ConnectToServer");
         CallConnectToClient();
     }
+    
     [NitroRPC(NitroType.Client)]
     void ConnectToClient()
     {
