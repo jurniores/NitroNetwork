@@ -456,6 +456,5 @@ NitroManager.OnConnectConn;
 NitroManager.OnDisconnectConn;
 //Events fired on your server and client when you are connected
 NitroManager.OnClientConnected
-NitroManager.OnServerConnected
 
 ```
