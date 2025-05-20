@@ -19,7 +19,8 @@ This script demonstrates how to automatically connect a client to the server whe
 
 ```csharp
 using UnityEngine;
-[RequireComponent(typeof(NitroIdentity))]
+using NitroNetwork.Core;
+
 [RequireComponent(typeof(NitroStatic))]
 public partial class ConnectPeers : NitroBehaviour
 {

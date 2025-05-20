@@ -83,6 +83,7 @@ namespace NitroNetwork.Core
             ClientConn = null;
             bufferPool = new NitroBufferPool(32000);
             Instance = this;
+
             // Register default RPCs for server and client
             RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.SendAES), ReceiveKeyAesServerRPC);
             RpcsServer.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.Ping), PingServerRPC);
@@ -488,7 +489,7 @@ namespace NitroNetwork.Core
             if (IsServer)
             {
                 peers.TryGetValue(peerId, out var conn);
-                SpeedHackValidate(conn);
+                //SpeedHackValidate(conn);
                 if (RpcsServer.TryGetValue((identityId, id), out var action))
                 {
                     action?.Invoke(buffer, conn);
@@ -855,7 +856,7 @@ namespace NitroNetwork.Core
                     buffer.SetInfo((byte)NitroCommands.Ping, (int)NitroCommands.ConfigsManager);
                     // Save the current time in milliseconds and write to buffer
                     stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                    Send(ClientConn, buffer.Buffer, DeliveryMode.Unreliable, 0, false);
+                    if(ClientConn != null) Send(ClientConn, buffer.Buffer, DeliveryMode.Unreliable, 0, false);
                 }
             }
         }
