@@ -819,7 +819,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Gets the current public RSA key.
         /// </summary>
-        internal static string GetPublicKey()
+        public static string GetPublicKey()
         {
             return Instance.publicKey;
         }
@@ -827,7 +827,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Gets the current private RSA key.
         /// </summary>
-        internal static string GetPrivateKey()
+        public static string GetPrivateKey()
         {
             return Instance.privateKey;
         }

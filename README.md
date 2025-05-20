@@ -419,9 +419,7 @@ NitroManager.Instance.Server;
 NitroManager.Instance.Client;
 // Connects in LAN mode (likely initializes the LAN network). Searches for a local server; if none exists, creates one.
 NitroManager.Instance.ConnectInLan;
-// These are keys used for game encryption
-NitroManager.publicKey;
-NitroManager.privateKey;
+
 // Disconnects a connection based on the number of messages sent per second.
 // This helps prevent speed hackers from exploiting the system.
 NitroManager.msgForDisconnectPeer;
@@ -449,6 +447,9 @@ NitroManager.GetPingClient();
 // Methods to get the bandwidth usage
 NitroManager.GetBandWithServer();
 NitroManager.GetBandWithClient();
+// These are keys used for game encryption
+NitroManager.GetPublicKey();
+NitroManager.GetPrivateKey();
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
 // Events triggered on peer connect/disconnect
