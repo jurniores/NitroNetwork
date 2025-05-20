@@ -52,7 +52,7 @@ namespace NitroNetwork.Core
         [SerializeField, HideIf(nameof(ConnectInLan))]
         private string address = "127.0.0.1"; // Default server address
         [SerializeField]
-        private int port = 5000; // Default server port
+        private int port = 7778; // Default server port
 
         public static NitroConn ClientConn, ServerConn; // Static references to client/server connections
         Transporter transporter; // Network transporter component
