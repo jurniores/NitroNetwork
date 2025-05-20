@@ -14,10 +14,9 @@ namespace NitroNetwork.Core
         [ReadOnly]
         [SerializeField]
         private string guidConnect = "";
-        [SerializeField]
+        [SerializeField, Range(0, 10)]
         private float timeWaitConnectLan = 2f;
         private NetManager _netServer, _netClient;
-        private NetDataWriter _dataWriter;
         private NitroManager nitroManager;
         public event Action<byte[], int, bool> OnMessage;
         public event Action<NitroConn, bool> OnConnected;
@@ -25,8 +24,11 @@ namespace NitroNetwork.Core
         public event Action<string> OnError;
         public event Action<NitroConn, bool> IPConnection;
         public bool SimulateLatency, SimulatePacketLoss;
+        [Range(0, 1000)]
         public int minLatence;
+        [Range(0, 1000)]
         public int maxLatence;
+        [Range(0, 1000)]
         public int SimulationPacketLossChance;
         int portServer = 0;
 
@@ -48,7 +50,6 @@ namespace NitroNetwork.Core
             {
                 portServer = port;
                 NetDebug.Logger = this;
-                _dataWriter = new NetDataWriter();
                 _netServer = new NetManager(this);
                 _netServer.Start(port);
                 _netServer.BroadcastReceiveEnabled = true;
@@ -74,9 +75,15 @@ namespace NitroNetwork.Core
         {
             portServer = port;
             _netClient = new NetManager(this);
+            _netClient.SimulateLatency = SimulateLatency;
+            _netClient.SimulationMinLatency = minLatence;
+            _netClient.SimulationMaxLatency = maxLatence;
+            _netClient.SimulatePacketLoss = SimulatePacketLoss;
+            _netClient.SimulationPacketLossChance = SimulationPacketLossChance;
             _netClient.UnconnectedMessagesEnabled = true;
             _netClient.UpdateTime = 15;
             _netClient.Start();
+            _netClient.PingInterval = 1000; // Set ping interval to 1 second
         }
         public void ClientConnectLan(int port, Action actionLanValidation)
         {
@@ -153,6 +160,7 @@ namespace NitroNetwork.Core
             if (messageType == UnconnectedMessageType.BasicMessage && _netClient.ConnectedPeersCount == 0 && reader.GetInt() == 1)
             {
                 StopAllCoroutines();
+
                 _netClient.Connect(remoteEndPoint, guidConnect);
             }
         }

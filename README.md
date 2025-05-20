@@ -139,7 +139,7 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 | `target`        | `Target`        | `Target.All`                    | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). **Only used for `NitroType.Client` RPCs.** |
 | `deliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered`  | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).                            |
 | `channel`       | `int`           | `0`                             | Specifies the communication channel for the RPC.                                                  |
-| `criptograde`   | `bool`          | `false`                         | If `true`, the message will be encrypted before being sent.                                       |
+| `criptograde`   | `bool`          | `false`                         | If `true` and `NitroType.Server`, the message is encrypted with the client's AES key. If `NitroType.Client`, it is encrypted with the server's public key. For increased security and to avoid `MITM` attacks, use `Target.Self`, the server will encrypt with the client's key and send only to that client. |
 
 ---
 
@@ -432,14 +432,6 @@ NitroManager.ConnectServer(7777);
 NitroManager.Disconnect();
 // Disconnects a specific client by its connection object
 NitroManager.DisconnectConn(Identity.conn);
-// Events triggered on peer connect/disconnect
-NitroManager.OnConnectConn;
-NitroManager.OnDisconnectConn;
-//Events fired on your server and client when you are connected
-NitroManager.OnClientConnected
-NitroManager.OnServerConnected
-// Creates a new room with the given ID
-var room = NitroManager.CreateRoom("Room1");
 // Removes a specific room instance
 NitroManager.RemoveRoom(room);
 // Gets the first (default/universal) room
@@ -450,4 +442,19 @@ NitroManager.RoomExists(room);
 NitroManager.GetPrefab(1);
 // Fetches a prefab by name (string)
 NitroManager.GetPrefab("Player");
+// Returns the current ping (latency in milliseconds) for the connected client.
+// Useful for displaying network quality or debugging connection issues.
+NitroManager.GetPingClient();
+// Methods to get the bandwidth usage
+NitroManager.GetBandWithServer();
+NitroManager.GetBandWithClient();
+// Creates a new room with the given ID
+var room = NitroManager.CreateRoom("Room1");
+// Events triggered on peer connect/disconnect
+NitroManager.OnConnectConn;
+NitroManager.OnDisconnectConn;
+//Events fired on your server and client when you are connected
+NitroManager.OnClientConnected
+NitroManager.OnServerConnected
+
 ```

@@ -16,7 +16,13 @@ namespace NitroNetwork.Core
         /// Identificador único da conexão.
         /// </summary>
         public int Id;
+        /// <summary>
+        /// Message counter to validate disconnection via speedhack.
+        /// </summary>
         public int countMsg = 0;
+        /// <summary>
+        /// Phase to check if the count is in sync with the server time.
+        /// </summary>
         public ulong fase = 0;
 
         /// <summary>
