@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using UnityEngine;
 using LiteNetLib;
 using LiteNetLib.Utils;
-using System.Collections.Generic;
 using System.Collections;
 
 namespace NitroNetwork.Core
@@ -14,8 +13,7 @@ namespace NitroNetwork.Core
         [ReadOnly]
         [SerializeField]
         private string guidConnect = "";
-        [SerializeField, Range(0, 10)]
-        private float timeWaitConnectLan = 2f;
+
         private NetManager _netServer, _netClient;
         private NitroManager nitroManager;
         public event Action<byte[], int, bool> OnMessage;
@@ -23,13 +21,23 @@ namespace NitroNetwork.Core
         public event Action<int, bool> OnDisconnected;
         public event Action<string> OnError;
         public event Action<NitroConn, bool> IPConnection;
-        public bool SimulateLatency, SimulatePacketLoss;
+        [Range(0, 10)]
+        public float timeWaitConnectLan = 2f;
+        [Range(0, 10000)]
+        public int disconnectedTimeout = 5000;
+        [Range(0, 255)]
+        public byte channels = 5;
+        [Header("Others Settings")]
+        public bool SimulateLatency;
+        public bool SimulatePacketLoss;
         [Range(0, 1000)]
         public int minLatence;
         [Range(0, 1000)]
         public int maxLatence;
         [Range(0, 1000)]
         public int SimulationPacketLossChance;
+
+
         int portServer = 0;
 
 
@@ -54,6 +62,8 @@ namespace NitroNetwork.Core
                 _netServer.Start(port);
                 _netServer.BroadcastReceiveEnabled = true;
                 _netServer.UpdateTime = 15;
+                _netServer.DisconnectTimeout = 5000;
+                _netServer.ChannelsCount = (byte)(channels + 1);
                 _netServer.SimulateLatency = SimulateLatency;
                 _netServer.SimulationMinLatency = minLatence;
                 _netServer.SimulationMaxLatency = maxLatence;
@@ -75,6 +85,8 @@ namespace NitroNetwork.Core
         {
             portServer = port;
             _netClient = new NetManager(this);
+            _netClient.DisconnectTimeout = disconnectedTimeout;
+            _netClient.ChannelsCount = (byte)(channels + 1);;
             _netClient.SimulateLatency = SimulateLatency;
             _netClient.SimulationMinLatency = minLatence;
             _netClient.SimulationMaxLatency = maxLatence;

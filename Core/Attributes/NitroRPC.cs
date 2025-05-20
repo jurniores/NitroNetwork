@@ -23,7 +23,10 @@ namespace NitroNetwork.Core
         /// Default is <c>true</c>.
         /// </summary>
         public bool requiresOwner = true;
-
+        /// <summary>
+        /// Indicates whether the RPC should be encrypted.
+        /// Default is <c>false</c>.
+        /// </summary>
         public bool criptograde = false;
 
         /// <summary>
@@ -42,7 +45,7 @@ namespace NitroNetwork.Core
         /// Specifies the communication channel for the RPC.
         /// Default is <c>0</c>.
         /// </summary>
-        public int channel = 0;
+        public byte channel = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NitroRPC"/> class with the specified type.
