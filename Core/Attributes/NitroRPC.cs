@@ -27,7 +27,7 @@ namespace NitroNetwork.Core
         /// Indicates whether the RPC should be encrypted.
         /// Default is <c>false</c>.
         /// </summary>
-        public bool criptograde = false;
+        public bool encrypt = false;
 
         /// <summary>
         /// Specifies the target audience for the RPC, for Client RPC.

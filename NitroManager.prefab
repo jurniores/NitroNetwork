@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1293381366778416740
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3843690243152686211}
+  - component: {fileID: 6351986667323765686}
+  - component: {fileID: 3654692999298581771}
+  m_Layer: 0
+  m_Name: NitroManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3843690243152686211
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1293381366778416740}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6351986667323765686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1293381366778416740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcbbe2538cdd71545873a58454381d32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  publicKey: <RSAKeyValue><Modulus>pfLHZC+3zlhe+wNkMOXcX+hEsnQ2yaB/sSLrp+9agV69mc/mQVCa0FNEQ2j2NP6/2SDThqZIiArfZzE858x12xQTSvKDiLNtmXFMdoVifb+ySYcCIU8r/dGw1wX3Vqhtw5B7G6WmNRK2q083uwT0Lze93WnxLSAalyFZ46EawrM=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>
+  privateKey: <RSAKeyValue><Modulus>pfLHZC+3zlhe+wNkMOXcX+hEsnQ2yaB/sSLrp+9agV69mc/mQVCa0FNEQ2j2NP6/2SDThqZIiArfZzE858x12xQTSvKDiLNtmXFMdoVifb+ySYcCIU8r/dGw1wX3Vqhtw5B7G6WmNRK2q083uwT0Lze93WnxLSAalyFZ46EawrM=</Modulus><Exponent>AQAB</Exponent><P>3mI6ZovAbgbU9elXCDQO+DkMiFCQ8OJVX/BVW2zKaFTkCRsCgN/pqAMOD66AJIM9xTsEalyJPMUDt6N0C21ntw==</P><Q>vwifuShG8P/XR2xge14MzJ3T6jNxb9lhBsQRNwhIuuxd+kUPOPvB0tpwKOe2RPX4VB9wugzlAWBI3qssuxLk5Q==</Q><DP>Y3rjjx3zLgUGXR9N3JCVJbs3fP81Z1yIPoufU2+eN//Jpr0baJVBy/PZ5W/1SOAg0Mru1bmhdrrXR93punbtjw==</DP><DQ>ELzCschTnt3rkLhwI57z5CGX5ZcoQzJ6i8s17ups5OO8wCa41LdKHh1BYnQaxiP+4+/1QnfKwLoc6FV7D9Dx+Q==</DQ><InverseQ>X8WQKzSaRwoUWrHP6h/YsDeyQQvWlBg1EjGPh9r+c/vuzgKOqnFtlvPWni9E95tzyjCkDIB6s1uaoqJK4jhehQ==</InverseQ><D>QrGfBxnScmC704AabTiEaBsuONZSCpixmRxiv3yH0ESmSMHwVUGy5pUAc2MkyEm2CuqReKUts1dDT/LO+o4Gsx5oNefTs7ObJivjOALfn/E06zdsNLw5bcqGqB8UNFS6fVqbilI0dTYM930H7waZ1rMq2oZPNx0S+yGEphq7R0k=</D></RSAKeyValue>
+  ConnectInLan: 0
+  address: 127.0.0.1
+  port: 7778
+  Server: 1
+  Client: 1
+  msgForDisconnectPeer: 60
+  nitroPrefabs: []
+--- !u!114 &3654692999298581771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1293381366778416740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e31e48c07e922af49af33ff69c665986, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  guidConnect: c5d66221-94c8-4c5f-85ef-1d1d50e4d241
+  timeWaitConnectLan: 2
+  disconnectedTimeoutSeconds: 15
+  channels: 5
+  MaxEventPerFrame: 0
+  SimulateLatency: 0
+  SimulatePacketLoss: 0
+  minLatence: 0
+  maxLatence: 0
+  SimulationPacketLossChance: 0
