@@ -14,6 +14,7 @@ This script demonstrates how to automatically connect a client to the server whe
 - Uses `[NitroRPC(NitroType.Server)]` to call a server-only method from the client.
 - Ensures the object exists in all peers using `NitroStatic`.
 - Inherits from `NitroBehaviour` to enable network features.
+- When using static, choose an Id for it; the default is 0
 
 ### 📄 Script
 
