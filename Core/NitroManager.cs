@@ -339,26 +339,23 @@ namespace NitroNetwork.Core
         {
             if (IsServer)
             {
+                if (peers.ContainsKey(conn.Id))
+                {
+                    return;
+                }
+
                 OnConnectConn?.Invoke(conn);
                 peers.TryAdd(conn.Id, conn);
                 SendInfoInitialForClient();
                 firstRoom.JoinRoom(conn);
-
-                if (peers.ContainsKey(conn.Id))
-                {
-                    Debug.Log($"Peer {conn.Id} connected from server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
-                }
-                else
-                {
-                    Debug.Log($"Failed to add peer {conn.Id}");
-                }
+                Debug.Log($"Peer {conn.Id} connected to server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
             }
             else
             {
                 if (ServerConn == null) ServerConn = new NitroConn();
                 ServerConn.Id = -1;
                 ServerConn.iPEndPoint = conn.iPEndPoint;
-                Debug.Log($"Peer {conn.Id} connected from server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
+                Debug.Log($"Client connected to server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
             }
 
             void SendInfoInitialForClient()
@@ -856,7 +853,7 @@ namespace NitroNetwork.Core
                     buffer.SetInfo((byte)NitroCommands.Ping, (int)NitroCommands.ConfigsManager);
                     // Save the current time in milliseconds and write to buffer
                     stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                    if(ClientConn != null) Send(ClientConn, buffer.Buffer, DeliveryMode.Unreliable, 0, false);
+                    if (ClientConn != null) Send(ClientConn, buffer.Buffer, DeliveryMode.Unreliable, 0, false);
                 }
             }
         }

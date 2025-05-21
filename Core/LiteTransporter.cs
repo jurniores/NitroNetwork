@@ -23,10 +23,12 @@ namespace NitroNetwork.Core
         public event Action<NitroConn, bool> IPConnection;
         [Range(0, 10)]
         public float timeWaitConnectLan = 2f;
-        [Range(0, 10000)]
-        public int disconnectedTimeout = 5000;
+        [Range(0, 360)]
+        public int disconnectedTimeoutSeconds = 15;
         [Range(0, 255)]
         public byte channels = 5;
+        [Range(0, 1000)]
+        public int MaxEventPerFrame = 0;
         [Header("Others Settings")]
         public bool SimulateLatency;
         public bool SimulatePacketLoss;
@@ -36,6 +38,7 @@ namespace NitroNetwork.Core
         public int maxLatence;
         [Range(0, 1000)]
         public int SimulationPacketLossChance;
+
 
 
         int portServer = 0;
@@ -62,7 +65,7 @@ namespace NitroNetwork.Core
                 _netServer.Start(port);
                 _netServer.BroadcastReceiveEnabled = true;
                 _netServer.UpdateTime = 15;
-                _netServer.DisconnectTimeout = 5000;
+                _netServer.DisconnectTimeout = disconnectedTimeoutSeconds * 1000;
                 _netServer.ChannelsCount = (byte)(channels + 1);
                 _netServer.SimulateLatency = SimulateLatency;
                 _netServer.SimulationMinLatency = minLatence;
@@ -85,8 +88,8 @@ namespace NitroNetwork.Core
         {
             portServer = port;
             _netClient = new NetManager(this);
-            _netClient.DisconnectTimeout = disconnectedTimeout;
-            _netClient.ChannelsCount = (byte)(channels + 1);;
+            _netClient.DisconnectTimeout = disconnectedTimeoutSeconds * 1000;
+            _netClient.ChannelsCount = (byte)(channels + 1);
             _netClient.SimulateLatency = SimulateLatency;
             _netClient.SimulationMinLatency = minLatence;
             _netClient.SimulationMaxLatency = maxLatence;
@@ -130,8 +133,8 @@ namespace NitroNetwork.Core
 
         private void Update()
         {
-            if (_netServer != null) _netServer.PollEvents();
-            if (_netClient != null) _netClient.PollEvents();
+            if (_netServer != null) _netServer.PollEvents(MaxEventPerFrame);
+            if (_netClient != null) _netClient.PollEvents(MaxEventPerFrame);
         }
         private void OnDestroy()
         {
