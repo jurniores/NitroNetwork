@@ -71,6 +71,9 @@ When your script inherits from `NitroBehaviour`, you gain access to key role-che
 | `IsMine`     | `bool`  | Client    | `true` if this identity belongs to the local client (i.e. the local player) |
 | `IsClient`   | `bool`  | Client    | `true` when the script is running on any client (not necessarily owner)     |
 | `IsServer`   | `bool`  | Server    | `true` when running on the server                                           |
+| `Id`         | `int`   | Both      | Manually set ID for static identities, automatically assigned for dynamic spawned objects |
+| `SpawnInParent` | `bool` | Both    | When true, object is automatically spawned as a child of its parent GameObject |
+| `Hide`       | `bool`  | Server    | When true, hides the object from the server's scene hierarchy                |
 
 These flags are safe to use anywhere inside your `NitroBehaviour` class to control RPC logic and authority.
 

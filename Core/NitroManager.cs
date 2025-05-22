@@ -635,12 +635,18 @@ namespace NitroNetwork.Core
         /// </summary>
         public static NitroIdentity GetPrefab(int id)
         {
-            var identity = Instance.nitroPrefabs.ElementAt(id);
-            if (identity != null)
+            try
             {
-                return identity;
+                var identity = Instance.nitroPrefabs.ElementAt(id);
+                if (identity != null)
+                {
+                    return identity;
+                }
             }
-            Debug.LogError($"Prefab {id} not found in dictionary.");
+            catch
+            {
+                Debug.LogError($"Prefab {id} not found in NitroManager.GetPrefab.");
+            }
             return null;
         }
 
@@ -714,39 +720,43 @@ namespace NitroNetwork.Core
         /// </summary>
         async void ReceiveKeyAesServerRPC(NitroBuffer buffer, NitroConn conn)
         {
+
+            NitroBuffer bufferNew = new()
+            {
+                buffer = buffer.buffer,
+                Length = buffer.Length
+            };
+
             try
             {
-                NitroBuffer bufferNew = new()
-                {
-                    buffer = buffer.buffer,
-                    Length = buffer.Length
-                };
-
                 await Task.Run(() =>
                 {
                     bufferNew.DecryptRSA(GetPrivateKey());
                 });
-
-                var keyAes = bufferNew.Read<byte[]>();
-
-                if (keyAes == null || keyAes.Length == 0)
-                {
-                    Debug.LogError("Received empty AES key.");
-                    return;
-                }
-
-                conn.keyAes = keyAes;
-                var bufferSend = Rent();
-                bufferSend.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
-                bufferSend.Write(ServerConn.keyAes);
-                bufferSend.EncriptAes(conn.keyAes);
-                Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
-
             }
             catch
             {
                 DisconnectConn(conn);
+                Debug.LogError("Client disconnected due to invalid RSA key.");
+                return;
             }
+
+            var keyAes = bufferNew.Read<byte[]>();
+
+            if (keyAes == null || keyAes.Length == 0)
+            {
+                Debug.LogError("Received empty AES key.");
+                return;
+            }
+
+            conn.keyAes = keyAes;
+            var bufferSend = Rent();
+            bufferSend.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
+            bufferSend.Write(ServerConn.keyAes);
+            bufferSend.EncriptAes(conn.keyAes);
+            Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
+
+
         }
         internal static int GetMyPing(NitroConn conn)
         {

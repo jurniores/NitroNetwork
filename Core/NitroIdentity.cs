@@ -14,25 +14,24 @@ namespace NitroNetwork.Core
     [DefaultExecutionOrder(-99)] // Sets the execution order of this script in Unity
     public class NitroIdentity : MonoBehaviour
     {
-        // Indicates whether the identity belongs to the server, client, or the local player
-        public bool IsServer = false, IsClient = false, IsMine = false;
-
-        [HideInInspector]
-        public bool IsStatic = false; // Indicates if the identity is static (does not change during execution)
-
-        private string namePrefab; // Name of the prefab associated with this identity
-        public int Id; // Unique identifier for this identity
-        [SerializeField]
-        private bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
-        protected string roomName;
         // Connections associated with this identity
         public NitroConn conn, callConn;
-
         public NitroRoom room; // Room associated with this identity
-
         // Dictionaries for storing server and client RPCs
         public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
         private NitroBehaviour[] behaviours; // Array of child behaviors associated with this identity
+        [HideInInspector]
+        public bool IsStatic = false; // Indicates if the identity is static (does not change during execution)
+        // Indicates whether the identity belongs to the server, client, or the local player
+        public bool IsServer = false, IsClient = false, IsMine = false;
+        public int Id; // Unique identifier for this identity
+        [SerializeField]
+        private bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
+        [Header("Hide from hierarchy")]
+        [SerializeField]
+        private bool Hide = true; // Indicates if the object should be hidden in the hierarchy
+        protected string roomName; // Name of the room associated with this identity
+        private string namePrefab; // Name of the prefab associated with this identity
 
         /// <summary>
         /// Called when the object is initialized.
@@ -41,6 +40,12 @@ namespace NitroNetwork.Core
         void Awake()
         {
             // Registers RPCs for child behaviors
+            if (IsServer && Hide)
+            {
+#if UNITY_EDITOR || UNITY_SERVER
+                DisableAllVisualComponents();
+#endif
+            }
             behaviours = GetComponentsInChildren<NitroBehaviour>(true);
 
             foreach (var nb in behaviours)
@@ -56,6 +61,24 @@ namespace NitroNetwork.Core
             if (IsStatic)
             {
                 SetConfig();
+            }
+        }
+
+        /// <summary>
+        /// Disables all visual components of the GameObject and its children, including Renderers and Canvas.
+        /// </summary>
+        public void DisableAllVisualComponents()
+        {
+            gameObject.hideFlags = HideFlags.HideInHierarchy;
+            // Disables all Renderers (MeshRenderer, SpriteRenderer, etc.)
+            foreach (var renderer in GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.enabled = false;
+            }
+            // Disables all Canvas
+            foreach (var canvas in GetComponentsInChildren<Canvas>(true))
+            {
+                canvas.enabled = false;
             }
         }
 
