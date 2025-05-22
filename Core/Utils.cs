@@ -39,5 +39,16 @@ namespace NitroNetwork.Core
         public byte[] EncryptedData;
         public byte[] IV;
     }
+    public struct NitroBandWidth
+    {
+        public int BClientSent;
+        public int BClientReceived;
+        public int BServerSent;
+        public int BServerReceived;
+        public int PacketSentClient;
+        public int PacketReceivedClient;
+        public int PacketSentServer;
+        public int PacketReceivedServer;
+    }
 
 }

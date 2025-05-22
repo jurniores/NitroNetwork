@@ -61,13 +61,14 @@ namespace NitroNetwork.Core
         public bool Server = true; // Should this instance act as server
         [HideIf(nameof(ConnectInLan))]
         public bool Client = true; // Should this instance act as client
-        private int widthBandServer, widthBandClient; // Bandwidth usage for server/client
+        private int BServerSent = 0, BClientSent = 0, PServerSent = 0, PClientSent = 0, BServerReceived = 0, BClientReceived = 0, PServerReceived = 0, PClientReceived = 0; // Bandwidth usage for server/client
         [Range(0, 1000)]
         public uint msgForDisconnectPeer = 60;
         private ulong faseValidadeSpeed = 0;
         public List<NitroIdentity> nitroPrefabs = new(); // List of registered Nitro prefabs
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn; // Connection event callbacks
-        public static Action<int> OnBandWidthServer, OnBandWidthClient, OnPingClient; // Bandwidth event callbacks
+        public static Action<int> OnPingClient; // Ping event callback
+        public static Action<NitroBandWidth> OnBandWidth; // Bandwidth event callbacks
         public static Action OnClientConnected; // Client connection event callback
         /// <summary>
         /// Unity Awake lifecycle method.
@@ -78,8 +79,7 @@ namespace NitroNetwork.Core
             OnConnectConn = null;
             OnClientConnected = null;
             OnDisconnectConn = null;
-            OnBandWidthServer = null;
-            OnBandWidthClient = null;
+            OnBandWidth = null;
             OnPingClient = null;
 
             ServerConn = null;
@@ -315,7 +315,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Gets the public key for encryption.
         /// </summary>
-        private static int GetPingClient()
+        public static int GetPingClient()
         {
             return Instance.transporter.GetPingClient();
         }
@@ -324,14 +324,14 @@ namespace NitroNetwork.Core
         /// </summary>
         public static int GetBandWidthServer()
         {
-            return Instance.widthBandServer;
+            return Instance.BServerSent;
         }
         /// <summary>
         /// Gets the public key for encryption.
         /// </summary>
         public static int GetBandWidthClient()
         {
-            return Instance.widthBandClient;
+            return Instance.BClientSent;
         }
         /// <summary>
         /// Handles peer connection events for both server and client.
@@ -485,8 +485,11 @@ namespace NitroNetwork.Core
             buffer.WriteForRead(message);
             buffer.Length = message.Length;
 
+
             if (IsServer)
             {
+                BServerReceived += message.Length;
+                PServerReceived++;
                 peers.TryGetValue(peerId, out var conn);
                 SpeedHackValidate(conn);
                 if (RpcsServer.TryGetValue((identityId, id), out var action))
@@ -505,6 +508,8 @@ namespace NitroNetwork.Core
             }
             else
             {
+                PClientReceived++;
+                BClientReceived += message.Length;
                 if (RpcsClient.TryGetValue((identityId, id), out var action))
                 {
                     action?.Invoke(buffer);
@@ -533,7 +538,8 @@ namespace NitroNetwork.Core
             }
             if (conn != null && target == Target.Self)
             {
-                Instance.widthBandServer += message.Length;
+                Instance.BServerSent += message.Length;
+                Instance.PServerSent++;
                 if (conn.keyAes == null) return;
                 Send(conn, message, deliveryMode, channel, true);
                 return;
@@ -557,7 +563,8 @@ namespace NitroNetwork.Core
                     {
                         continue;
                     }
-                    Instance.widthBandServer += message.Length;
+                    Instance.PServerSent++;
+                    Instance.BServerSent += message.Length;
                     Send(connRoom, message, deliveryMode, channel, true);
                 }
                 return;
@@ -571,7 +578,8 @@ namespace NitroNetwork.Core
         {
             if (Instance.IsClient)
             {
-                Instance.widthBandClient += message.Length;
+                Instance.BClientSent += message.Length;
+                Instance.PClientSent++;
                 if (ServerConn.keyAes == null) return;
                 Send(ServerConn, message, deliveryMode, channel, false);
             }
@@ -841,11 +849,30 @@ namespace NitroNetwork.Core
             while (true)
             {
                 yield return new WaitForSeconds(1f);
-                OnBandWidthServer?.Invoke(Instance.widthBandServer);
-                OnBandWidthClient?.Invoke(Instance.widthBandClient);
+
+                var bandWidth = new NitroBandWidth()
+                {
+                    BClientSent = BClientSent,
+                    BClientReceived = BClientReceived,
+                    BServerSent = BServerSent,
+                    BServerReceived = BServerReceived,
+                    PacketSentClient = PClientSent,
+                    PacketReceivedClient = PClientReceived,
+                    PacketSentServer = PServerSent,
+                    PacketReceivedServer = PServerReceived
+                };
+
+                OnBandWidth?.Invoke(bandWidth);
                 OnPingClient?.Invoke(GetPingClient());
-                widthBandClient = 0;
-                widthBandServer = 0;
+
+                BClientSent = 0;
+                BServerSent = 0;
+                PClientSent = 0;
+                PServerSent = 0;
+                BClientReceived = 0;
+                BServerReceived = 0;
+                PClientReceived = 0;
+                PServerReceived = 0;
             }
         }
 
