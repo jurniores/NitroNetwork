@@ -40,7 +40,7 @@ namespace NitroNetwork.Core
         void Awake()
         {
             // Registers RPCs for child behaviors
-            if (IsServer && Hide)
+            if (IsClient && Hide)
             {
 #if UNITY_EDITOR || UNITY_SERVER
                 DisableAllVisualComponents();
