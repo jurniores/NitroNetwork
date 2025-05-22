@@ -141,7 +141,7 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 | `target`        | `Target`        | `Target.All`                    | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). **Only used for `NitroType.Client` RPCs.** |
 | `deliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered`  | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).                            |
 | `channel`       | `int`           | `0`                             | Specifies the communication channel for the RPC.                                                  |
-| `criptograde`   | `bool`          | `false`                         | If `true` and `NitroType.Server`, the message is encrypted with the client's AES key. If `NitroType.Client`, it is encrypted with the server's public key. For increased security and to avoid `MITM` attacks, use `Target.Self`, the server will encrypt with the client's key and send only to that client. |
+| `encrypt`   | `bool`          | `false`                         | If `true` and `NitroType.Server`, the message is encrypted with the client's AES key. If `NitroType.Client`, it is encrypted with the server's public key. For increased security and to avoid `MITM` attacks, use `Target.Self`, the server will encrypt with the client's key and send only to that client. |
 
 ---
 
