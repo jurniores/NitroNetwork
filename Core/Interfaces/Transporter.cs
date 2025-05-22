@@ -10,6 +10,8 @@ public interface Transporter
     public void DisconnectServer();
     public void DisconnectClient();
     public void DisconnectPeer(int peerId);
+    public int GetMyPing(int id);
+    public int GetPingClient();
     public void Send(int peerId, Span<byte> msg, DeliveryMode deliveryMethod, byte channel, bool IsServer);
     public event Action<NitroConn, bool> OnConnected;
     public event Action<int, bool> OnDisconnected;

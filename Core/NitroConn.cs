@@ -24,6 +24,10 @@ namespace NitroNetwork.Core
         /// Phase to check if the count is in sync with the server time.
         /// </summary>
         public ulong fase = 0;
+        /// <summary>
+        /// Ping of the connection.
+        /// </summary>
+        public int Ping => NitroManager.GetMyPing(this);
 
         /// <summary>
         /// Endpoint IP associado a esta conexão.

@@ -394,6 +394,8 @@ conn.Id;
 conn.iPEndPoint;
  // Dictionary for storing custom data associated with this connection
 conn.customData;
+//Ping of the conn, in the server
+conn.Ping;
 // Associates a network identity with this connection.
 // If the connection is lost, the identity is automatically destroyed.
 conn.AddIdentity(nitroIdentity);
@@ -420,7 +422,6 @@ NitroManager.Instance.Server;
 NitroManager.Instance.Client;
 // Connects in LAN mode (likely initializes the LAN network). Searches for a local server; if none exists, creates one.
 NitroManager.Instance.ConnectInLan;
-
 // Disconnects a connection based on the number of messages sent per second.
 // This helps prevent speed hackers from exploiting the system.
 NitroManager.msgForDisconnectPeer;
@@ -451,12 +452,17 @@ NitroManager.GetBandWithClient();
 // These are keys used for game encryption
 NitroManager.GetPublicKey();
 NitroManager.GetPrivateKey();
+//Get Ping of the Client in Client
+NitroManager.GetPingClient()
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
 // Events triggered on peer connect/disconnect
 NitroManager.OnConnectConn;
 NitroManager.OnDisconnectConn;
 //Events fired on your server and client when you are connected
-NitroManager.OnClientConnected
+NitroManager.OnClientConnected;
+//Events BandWidth
+NitroManager.OnBandWidthServer;
+NitroManager.OnBandWidthClient;
 
 ```

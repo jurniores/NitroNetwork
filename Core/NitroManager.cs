@@ -47,13 +47,13 @@ namespace NitroNetwork.Core
         private NitroConn connCallManager = new(); // Helper connection for internal use
         private static NitroManager Instance; // Singleton instance
         public bool ConnectInLan = false; // LAN mode flag
-        private int bandWithServer = 0, bandaWithValidateServer = 0, bandWithClient = 0, bandaWithValidateClient = 0;
+        private Queue<int> bandWithServer = new(); // Bandwidth usage for server
+        private Queue<int> bandWithClient = new(); // Bandwidth usage for client
 
         [SerializeField, HideIf(nameof(ConnectInLan))]
         private string address = "127.0.0.1"; // Default server address
         [SerializeField]
         private int port = 7778; // Default server port
-
         public static NitroConn ClientConn, ServerConn; // Static references to client/server connections
         Transporter transporter; // Network transporter component
         internal bool IsServer, IsClient; // Flags for server/client mode
@@ -61,24 +61,26 @@ namespace NitroNetwork.Core
         public bool Server = true; // Should this instance act as server
         [HideIf(nameof(ConnectInLan))]
         public bool Client = true; // Should this instance act as client
+        private int widthBandServer, widthBandClient; // Bandwidth usage for server/client
         [Range(1, 1000)]
         public uint msgForDisconnectPeer = 60;
         private ulong faseValidadeSpeed = 0;
         public List<NitroIdentity> nitroPrefabs = new(); // List of registered Nitro prefabs
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn; // Connection event callbacks
+        public static Action<int> OnBandWidthServer, OnBandWidthClient; // Bandwidth event callbacks
         public static Action OnClientConnected; // Client connection event callback
-        private uint LastPing; // Stores the last calculated ping (in ms)
-        Queue<double> queuePing = new(); // Queue to store ping values for averaging
-        private System.Diagnostics.Stopwatch stopwatch;
         /// <summary>
         /// Unity Awake lifecycle method.
         /// Initializes the NitroManager, registers RPCs, sets up the transporter, and generates encryption keys.
         /// </summary>
         private async void Awake()
         {
-            OnClientConnected = null;
             OnConnectConn = null;
+            OnClientConnected = null;
             OnDisconnectConn = null;
+            OnBandWidthServer = null;
+            OnBandWidthClient = null;
+
             ServerConn = null;
             ClientConn = null;
             bufferPool = new NitroBufferPool(32000);
@@ -86,13 +88,11 @@ namespace NitroNetwork.Core
 
             // Register default RPCs for server and client
             RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.SendAES), ReceiveKeyAesServerRPC);
-            RpcsServer.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.Ping), PingServerRPC);
             //Rpcs Clientes
             RpcsClient.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.SpawnRPC), SpawnInClient);
             RpcsClient.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.DespawnIdentity), DestroyIdentity);
             RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connecting), GetConnectionClientRPC);
             RpcsClient.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.Connected), ClientConnectedClientRPC);
-            RpcsClient.Add(((int)NitroCommands.ConfigsManager, (byte)NitroCommands.Ping), PingClientRPC);
 
             // Register Nitro prefabs
             foreach (var prefabs in nitroPrefabs)
@@ -314,23 +314,23 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Gets the public key for encryption.
         /// </summary>
-        public static uint GetPingClient()
+        public static int GetPingClient()
         {
-            return Instance.LastPing;
+            return Instance.transporter.GetPingClient();
         }
         /// <summary>
         /// Gets the public key for encryption.
         /// </summary>
-        public static int GetBandWithServer()
+        public static int GetBandWidthServer()
         {
-            return Instance.bandWithServer;
+            return Instance.widthBandServer;
         }
         /// <summary>
         /// Gets the public key for encryption.
         /// </summary>
-        public static int GetBandWithClient()
+        public static int GetBandWidthClient()
         {
-            return Instance.bandWithClient;
+            return Instance.widthBandClient;
         }
         /// <summary>
         /// Handles peer connection events for both server and client.
@@ -474,7 +474,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Handles incoming messages from peers and dispatches them to the appropriate RPCs.
         /// </summary>
-        internal void ReceiveMessage(ReadOnlySpan<byte> message, int peerId, bool IsServer)
+        internal void ReceiveMessage(ReadOnlySpan<byte> message, int ping, int peerId, bool IsServer)
         {
             byte id = message[0];
             int identityId = (message[1] & 0xFF) | ((message[2] & 0xFF) << 8) | ((message[3] & 0xFF) << 16) | ((message[4] & 0xFF) << 24);
@@ -486,7 +486,7 @@ namespace NitroNetwork.Core
             if (IsServer)
             {
                 peers.TryGetValue(peerId, out var conn);
-                //SpeedHackValidate(conn);
+                SpeedHackValidate(conn);
                 if (RpcsServer.TryGetValue((identityId, id), out var action))
                 {
                     action?.Invoke(buffer, conn);
@@ -531,7 +531,7 @@ namespace NitroNetwork.Core
             }
             if (conn != null && target == Target.Self)
             {
-                Instance.bandaWithValidateServer += message.Length;
+                Instance.widthBandServer += message.Length;
                 if (conn.keyAes == null) return;
                 Send(conn, message, deliveryMode, channel, true);
                 return;
@@ -555,7 +555,7 @@ namespace NitroNetwork.Core
                     {
                         continue;
                     }
-                    Instance.bandaWithValidateServer += message.Length;
+                    Instance.widthBandServer += message.Length;
                     Send(connRoom, message, deliveryMode, channel, true);
                 }
                 return;
@@ -569,7 +569,7 @@ namespace NitroNetwork.Core
         {
             if (Instance.IsClient)
             {
-                Instance.bandaWithValidateClient += message.Length;
+                Instance.widthBandClient += message.Length;
                 if (ServerConn.keyAes == null) return;
                 Send(ServerConn, message, deliveryMode, channel, false);
             }
@@ -714,31 +714,47 @@ namespace NitroNetwork.Core
         /// </summary>
         async void ReceiveKeyAesServerRPC(NitroBuffer buffer, NitroConn conn)
         {
-            NitroBuffer bufferNew = new()
+            try
             {
-                buffer = buffer.buffer,
-                Length = buffer.Length
-            };
+                NitroBuffer bufferNew = new()
+                {
+                    buffer = buffer.buffer,
+                    Length = buffer.Length
+                };
 
-            await Task.Run(() =>
-            {
-                bufferNew.DecryptRSA(GetPrivateKey());
-            });
+                await Task.Run(() =>
+                {
+                    bufferNew.DecryptRSA(GetPrivateKey());
+                });
 
-            var keyAes = bufferNew.Read<byte[]>();
+                var keyAes = bufferNew.Read<byte[]>();
 
-            if (keyAes == null || keyAes.Length == 0)
-            {
-                Debug.LogError("Received empty AES key.");
-                return;
+                if (keyAes == null || keyAes.Length == 0)
+                {
+                    Debug.LogError("Received empty AES key.");
+                    return;
+                }
+
+                conn.keyAes = keyAes;
+                var bufferSend = Rent();
+                bufferSend.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
+                bufferSend.Write(ServerConn.keyAes);
+                bufferSend.EncriptAes(conn.keyAes);
+                Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
+
             }
-
-            conn.keyAes = keyAes;
-            var bufferSend = Rent();
-            bufferSend.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
-            bufferSend.Write(ServerConn.keyAes);
-            bufferSend.EncriptAes(conn.keyAes);
-            Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
+            catch
+            {
+                DisconnectConn(conn);
+            }
+        }
+        internal static int GetMyPing(NitroConn conn)
+        {
+            return Instance.transporter.GetMyPing(conn.Id);
+        }
+        public static Dictionary<int, NitroConn> GetConns()
+        {
+            return Instance.peers;
         }
 
         /// <summary>
@@ -746,7 +762,7 @@ namespace NitroNetwork.Core
         /// </summary>
         private void ClientConnectedClientRPC(NitroBuffer buffer)
         {
-            buffer.DecryptAes(ClientConn.keyAes);
+            if (!buffer.DecryptAes(ClientConn.keyAes)) return;
             var serverAes = buffer.Read<byte[]>();
             ServerConn.keyAes = serverAes;
             IsClient = true;
@@ -774,36 +790,7 @@ namespace NitroNetwork.Core
             }
             conn.countMsg++;
         }
-        /// <summary>
-        /// Handles the ping request from the client and responds with a ping message.
-        /// </summary>
-        private void PingServerRPC(NitroBuffer buffer, NitroConn conn)
-        {
-            Send(conn, buffer.Buffer, DeliveryMode.Unreliable, 0);
-        }
-        /// <summary>
-        /// Handles the ping response from the client.
-        /// </summary>
-        private void PingClientRPC(NitroBuffer buffer)
-        {
-            // Adiciona o tempo atual de resposta à fila
-            stopwatch.Stop();
-            double ping = (stopwatch.ElapsedMilliseconds / 2) - Time.deltaTime * 1000;
 
-            queuePing.Enqueue(ping);
-
-            if (queuePing.Count > 20)
-            {
-                queuePing.Dequeue();
-            }
-
-            double pingSum = 0;
-            foreach (var p in queuePing)
-            {
-                pingSum += p;
-            }
-            LastPing = (uint)(queuePing.Count > 0 ? pingSum / queuePing.Count : 0);
-        }
 
         /// <summary>
         /// Rents a NitroBuffer from the pool.
@@ -842,19 +829,10 @@ namespace NitroNetwork.Core
             while (true)
             {
                 yield return new WaitForSeconds(1f);
-                bandWithServer = bandaWithValidateServer;
-                bandaWithValidateServer = 0;
-                bandWithClient = bandaWithValidateClient;
-                bandaWithValidateClient = 0;
-                // Script Ping
-                if (IsClient)
-                {
-                    using var buffer = Rent();
-                    buffer.SetInfo((byte)NitroCommands.Ping, (int)NitroCommands.ConfigsManager);
-                    // Save the current time in milliseconds and write to buffer
-                    stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                    if (ClientConn != null) Send(ClientConn, buffer.Buffer, DeliveryMode.Unreliable, 0, false);
-                }
+                OnBandWidthServer?.Invoke(Instance.widthBandServer);
+                OnBandWidthClient?.Invoke(Instance.widthBandClient);
+                widthBandClient = 0;
+                widthBandServer = 0;
             }
         }
 

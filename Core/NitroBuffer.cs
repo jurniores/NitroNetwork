@@ -333,21 +333,30 @@ namespace NitroNetwork.Core
             tam += result.EncryptedData.Length;
             return result;
         }
-        public void DecryptAes(byte[] key)
+        public bool DecryptAes(byte[] key)
         {
-            int sizeIV = 16;
-            int sizeEncriptadData = Length - tam - sizeIV;
-            byte[] IV = buffer.AsSpan(tam, sizeIV).ToArray();
-            byte[] encryptedData = buffer.AsSpan(tam + sizeIV, sizeEncriptadData).ToArray();
-            var aesResult = new AesResult
+            try
             {
-                IV = IV,
-                EncryptedData = encryptedData
-            };
+                int sizeIV = 16;
+                int sizeEncriptadData = Length - tam - sizeIV;
+                byte[] IV = buffer.AsSpan(tam, sizeIV).ToArray();
+                byte[] encryptedData = buffer.AsSpan(tam + sizeIV, sizeEncriptadData).ToArray();
+                var aesResult = new AesResult
+                {
+                    IV = IV,
+                    EncryptedData = encryptedData
+                };
 
-            var bufferDecript = NitroCriptografyAES.Decrypt(aesResult.EncryptedData, key, aesResult.IV);
-            bufferDecript.CopyTo(buffer.AsSpan(5, bufferDecript.Length));
+                var bufferDecript = NitroCriptografyAES.Decrypt(aesResult.EncryptedData, key, aesResult.IV);
+                bufferDecript.CopyTo(buffer.AsSpan(5, bufferDecript.Length));
+                return true;
 
+            }
+            catch
+            {
+
+                return false;
+            }
         }
 
     }

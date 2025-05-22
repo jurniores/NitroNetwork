@@ -118,23 +118,10 @@ namespace NitroNetwork.Core
             InfoClient(port);
             _netClient.Connect(ip, port, guidConnect);
         }
-        public void Disconnect()
-        {
-            DisconnectClient();
-            DisconnectServer();
-        }
-        public void DisconnectPeer(int peerId)
-        {
-            if (_netServer.GetPeerById(peerId) != null)
-            {
-                _netServer.DisconnectPeer(_netServer.GetPeerById(peerId));
-            }
-        }
-
         private void Update()
         {
-            if (_netServer != null) _netServer.PollEvents(MaxEventPerFrame);
-            if (_netClient != null) _netClient.PollEvents(MaxEventPerFrame);
+            _netServer?.PollEvents(MaxEventPerFrame);
+            _netClient?.PollEvents(MaxEventPerFrame);
         }
         private void OnDestroy()
         {
@@ -196,7 +183,7 @@ namespace NitroNetwork.Core
 
         void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod)
         {
-            nitroManager.ReceiveMessage(reader.GetRemainingBytesSpan(), peer.Id, peer.Port != portServer);
+            nitroManager.ReceiveMessage(reader.GetRemainingBytesSpan(), peer.Ping, peer.Id, peer.Port != portServer);
         }
 
         void INetLogger.WriteNet(NetLogLevel level, string str, params object[] args)
@@ -220,6 +207,38 @@ namespace NitroNetwork.Core
                 _netClient.Stop();
                 _netClient = null;
             }
+        }
+        public void Disconnect()
+        {
+            DisconnectClient();
+            DisconnectServer();
+        }
+        public void DisconnectPeer(int peerId)
+        {
+            if (_netServer.GetPeerById(peerId) != null)
+            {
+                _netServer.DisconnectPeer(_netServer.GetPeerById(peerId));
+            }
+        }
+        public int GetPingClient()
+        {
+            if (_netClient != null)
+            {
+                return _netClient.FirstPeer?.Ping ?? 0;
+            }
+            return 0;
+        }
+        public int GetMyPing(int id)
+        {
+            if (_netServer != null)
+            {
+                var peer = _netServer.GetPeerById(id);
+                if (peer != null)
+                {
+                    return peer.Ping;
+                }
+            }
+            return 0;
         }
 
         public void Send(int peerId, Span<byte> msg, DeliveryMode deliveryMethod, byte channel, bool IsServer)
@@ -254,7 +273,6 @@ namespace NitroNetwork.Core
                      $"[LiteTransporter] Unsupported delivery mode '{deliveryMode}'"),
             };
         }
-
     }
 
 }
