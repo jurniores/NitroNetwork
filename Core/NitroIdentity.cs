@@ -16,22 +16,30 @@ namespace NitroNetwork.Core
     {
         // Connections associated with this identity
         public NitroConn conn, callConn;
-        public NitroRoom room; // Room associated with this identity
+        // Room associated with this identity
+        public NitroRoom room;
         // Dictionaries for storing server and client RPCs
         public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
-        private NitroBehaviour[] behaviours; // Array of child behaviors associated with this identity
+        // Array of child behaviors associated with this identity
+        private NitroBehaviour[] behaviours;
+        // Indicates if the identity is static (does not change during execution)
         [HideInInspector]
-        public bool IsStatic = false; // Indicates if the identity is static (does not change during execution)
+        public bool IsStatic = false;
         // Indicates whether the identity belongs to the server, client, or the local player
         public bool IsServer = false, IsClient = false, IsMine = false;
-        public int Id; // Unique identifier for this identity
+        // Unique identifier for this identity
+        public int Id;
+        // Indicates if the object should spawn as a child of another
         [SerializeField]
-        private bool SpawnInParent = true; // Indicates if the object should spawn as a child of another
+        private bool SpawnInParent = true;
+        // Indicates if the object should be hidden in the hierarchy
         [Header("Hide from hierarchy")]
         [SerializeField]
-        private bool Hide = true; // Indicates if the object should be hidden in the hierarchy
-        protected string roomName; // Name of the room associated with this identity
-        private string namePrefab; // Name of the prefab associated with this identity
+        private bool Hide = true;
+        // Name of the room associated with this identity
+        protected string roomName;
+        // Name of the prefab associated with this identity
+        private string namePrefab;
 
         /// <summary>
         /// Called when the object is initialized.
@@ -39,13 +47,16 @@ namespace NitroNetwork.Core
         /// </summary>
         void Awake()
         {
+#if UNITY_EDITOR
             // Registers RPCs for child behaviors
-            if (IsClient && Hide)
+            var isServer = false;
+            var isClient = false;
+            NitroManager.IsServerAndClient(ref isServer, ref isClient, this);
+            if (isServer && isClient && Hide)
             {
-#if UNITY_EDITOR || UNITY_SERVER
-                DisableAllVisualComponents();
-#endif
+                if (IsServer) DisableAllVisualComponents();
             }
+#endif
             behaviours = GetComponentsInChildren<NitroBehaviour>(true);
 
             foreach (var nb in behaviours)
