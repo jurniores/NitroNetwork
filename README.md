@@ -210,7 +210,7 @@ In **NitroNetwork**, to spawn an object over the network, you must:
 Below are the key properties available in the `NitroIdentity` component:
 | Property       | Type            | Description                                                     |
 |----------------|-----------------|-----------------------------------------------------------------|
-| `Id`           | `int`           | Unique identifier for this object across the network            |
+| `Id`           | `int`           | Unique identifier for this object across the network. For static identities, this ID must be manually assigned |
 | `conn`         | `NitroConn`     | The connection that owns this identity (null for static objects)|
 | `IsStatic`     | `bool`          | Whether this identity is static (pre-existing in scene)         |
 | `IsServer`     | `bool`          | True if this identity is running on the server                  |
