@@ -67,7 +67,7 @@ namespace NitroNetwork.Core
         private ulong faseValidadeSpeed = 0;
         public List<NitroIdentity> nitroPrefabs = new(); // List of registered Nitro prefabs
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn; // Connection event callbacks
-        public static Action<int> OnBandWidthServer, OnBandWidthClient; // Bandwidth event callbacks
+        public static Action<int> OnBandWidthServer, OnBandWidthClient, OnPingClient; // Bandwidth event callbacks
         public static Action OnClientConnected; // Client connection event callback
         /// <summary>
         /// Unity Awake lifecycle method.
@@ -80,6 +80,7 @@ namespace NitroNetwork.Core
             OnDisconnectConn = null;
             OnBandWidthServer = null;
             OnBandWidthClient = null;
+            OnPingClient = null;
 
             ServerConn = null;
             ClientConn = null;
@@ -314,7 +315,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Gets the public key for encryption.
         /// </summary>
-        public static int GetPingClient()
+        private static int GetPingClient()
         {
             return Instance.transporter.GetPingClient();
         }
@@ -477,7 +478,8 @@ namespace NitroNetwork.Core
         internal void ReceiveMessage(ReadOnlySpan<byte> message, int ping, int peerId, bool IsServer)
         {
             byte id = message[0];
-            int identityId = (message[1] & 0xFF) | ((message[2] & 0xFF) << 8) | ((message[3] & 0xFF) << 16) | ((message[4] & 0xFF) << 24);
+            int identityId = (message[1] & 0xFF) | ((message[2] & 0xFF) << 8) | ((message[3] & 0xFF) << 16);
+
             using var buffer = Rent();
 
             buffer.WriteForRead(message);
@@ -841,6 +843,7 @@ namespace NitroNetwork.Core
                 yield return new WaitForSeconds(1f);
                 OnBandWidthServer?.Invoke(Instance.widthBandServer);
                 OnBandWidthClient?.Invoke(Instance.widthBandClient);
+                OnPingClient?.Invoke(GetPingClient());
                 widthBandClient = 0;
                 widthBandServer = 0;
             }

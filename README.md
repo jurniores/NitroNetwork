@@ -71,9 +71,6 @@ When your script inherits from `NitroBehaviour`, you gain access to key role-che
 | `IsMine`     | `bool`  | Client    | `true` if this identity belongs to the local client (i.e. the local player) |
 | `IsClient`   | `bool`  | Client    | `true` when the script is running on any client (not necessarily owner)     |
 | `IsServer`   | `bool`  | Server    | `true` when running on the server                                           |
-| `Id`         | `int`   | Both      | Manually set ID for static identities, automatically assigned for dynamic spawned objects |
-| `SpawnInParent` | `bool` | Both    | When true, object is automatically spawned as a child of its parent GameObject |
-| `Hide`       | `bool`  | Server    | When true, hides the object from the server's scene hierarchy                |
 
 These flags are safe to use anywhere inside your `NitroBehaviour` class to control RPC logic and authority.
 
@@ -208,6 +205,62 @@ In **NitroNetwork**, to spawn an object over the network, you must:
 - Your prefab must be registered via `NitroManager`.
 - The prefab must contain a `NitroIdentity` component.
 - To spawn the object for a specific client, pass `Identity.callConn` as the owner.
+### ✅ Key Properties of `NitroIdentity`
+
+Below are the key properties available in the `NitroIdentity` component:
+| Property       | Type            | Description                                                     |
+|----------------|-----------------|-----------------------------------------------------------------|
+| `Id`           | `int`           | Unique identifier for this object across the network            |
+| `conn`         | `NitroConn`     | The connection that owns this identity (null for static objects)|
+| `IsStatic`     | `bool`          | Whether this identity is static (pre-existing in scene)         |
+| `IsServer`     | `bool`          | True if this identity is running on the server                  |
+| `IsClient`     | `bool`          | True if this identity is running on a client                    |
+| `IsMine`       | `bool`          | True if the local connection owns this identity                 |
+| `Room`         | `NitroRoom`     | The room this identity belongs to                               |
+| `callConn`     | `NitroConn`     | The connection that initiated the last RPC call                 |
+| `lastClientId` | `int`           | ID of the last client to interact with this identity            |
+| `Hide`         | `bool`          | When set in inspector, hides the object from network spawning   |
+| `SpawnInParent`| `bool`          | When enabled, spawns the object as a child of a specified parent|
+
+## 📜 Multiple NitroBehaviour Scripts Per Object
+
+In **NitroNetwork**, you can attach multiple `NitroBehaviour` scripts to a single networked object. This allows you to organize your code logically, separating different aspects of functionality (movement, health, inventory, etc.) into different components.
+
+### ⚠️ RPC Limits Per Identity
+
+While you can add as many `NitroBehaviour` scripts as you need to a GameObject, there are important limits to be aware of:
+
+- Each `NitroIdentity` can have up to **250 client RPCs** across all its NitroBehaviour components
+- Each `NitroIdentity` can have up to **250 server RPCs** across all its NitroBehaviour components
+
+These limits apply to the total number of RPC methods defined across all `NitroBehaviour` scripts attached to the same GameObject with a `NitroIdentity` component.
+
+### 🧪 Example: Distributing RPCs Across Multiple Scripts
+
+```csharp
+// PlayerMovement.cs
+[RequireComponent(typeof(NitroIdentity))]
+public partial class PlayerMovement : NitroBehaviour
+{
+    [NitroRPC(NitroType.Server)]
+    void MovePlayer(Vector3 position) { /* ... */ }
+    
+    [NitroRPC(NitroType.Client)]
+    void SyncPosition(Vector3 position) { /* ... */ }
+}
+
+// PlayerCombat.cs - Attached to the same GameObject
+public partial class PlayerCombat : NitroBehaviour
+{
+    [NitroRPC(NitroType.Server)]
+    void AttackTarget(int targetId) { /* ... */ }
+    
+    [NitroRPC(NitroType.Client)]
+    void PlayAttackAnimation(int animId) { /* ... */ }
+}
+```
+
+All these RPCs count toward the 250 client and 250 server RPC limits for the single `NitroIdentity` on the GameObject.
 
 ---
 
@@ -455,8 +508,7 @@ NitroManager.GetBandWithClient();
 // These are keys used for game encryption
 NitroManager.GetPublicKey();
 NitroManager.GetPrivateKey();
-//Get Ping of the Client in Client
-NitroManager.GetPingClient()
+
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
 // Events triggered on peer connect/disconnect
@@ -467,5 +519,7 @@ NitroManager.OnClientConnected;
 //Events BandWidth
 NitroManager.OnBandWidthServer;
 NitroManager.OnBandWidthClient;
+//Events Ping Client
+NitroManager.OnPingClient;
 
 ```

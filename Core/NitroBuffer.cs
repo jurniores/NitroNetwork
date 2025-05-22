@@ -28,7 +28,7 @@ namespace NitroNetwork.Core
         /// Current position in the buffer. Starts at 3 to reserve space for
         /// command ID and identity ID in the first bytes.
         /// </summary>
-        public int tam = 5, Length;
+        public int tam = 4, Length;
         public NitroBuffer(int capacity, int id)
         {
             ID = id;
@@ -164,7 +164,6 @@ namespace NitroNetwork.Core
             buffer[1] = (byte)(identityId & 0xFF);
             buffer[2] = (byte)((identityId >> 8) & 0xFF);
             buffer[3] = (byte)((identityId >> 16) & 0xFF);
-            buffer[4] = (byte)((identityId >> 24) & 0xFF);
         }
 
         /// <summary>
@@ -307,28 +306,28 @@ namespace NitroNetwork.Core
         /// </summary>
         public void Dispose()
         {
-            tam = 5;
+            tam = 4;
             Length = 0;
             NitroManager.bufferPool.Return(this);
         }
         internal void EncriptRSA(string publicKey)
         {
             var bufferCripto = NitroCriptografyRSA.Encrypt(publicKey, Buffer.ToArray());
-            bufferCripto.CopyTo(buffer.AsSpan(5, bufferCripto.Length));
-            tam = 5 + bufferCripto.Length;
+            bufferCripto.CopyTo(buffer.AsSpan(4, bufferCripto.Length));
+            tam = 4 + bufferCripto.Length;
         }
         internal void DecryptRSA(string privateKey)
         {
             ReadOnlySpan<byte> bytes;
-            bytes = NitroCriptografyRSA.Decrypt(privateKey, buffer.AsSpan(5, tam > 5 ? tam - 5 : Length - 5).ToArray());
-            tam = 5;
+            bytes = NitroCriptografyRSA.Decrypt(privateKey, buffer.AsSpan(4, tam > 4 ? tam - 4 : Length - 4).ToArray());
+            tam = 4;
             WriteForRead(bytes);
         }
         public AesResult EncriptAes(byte[] key)
         {
-            var result = NitroCriptografyAES.Encrypt(buffer.AsSpan(5, tam - 5).ToArray(), key);
-            result.IV.CopyTo(buffer.AsSpan(5, result.IV.Length));
-            tam = 5 + result.IV.Length;
+            var result = NitroCriptografyAES.Encrypt(buffer.AsSpan(4, tam - 4).ToArray(), key);
+            result.IV.CopyTo(buffer.AsSpan(4, result.IV.Length));
+            tam = 4 + result.IV.Length;
             result.EncryptedData.CopyTo(buffer.AsSpan(tam, result.EncryptedData.Length));
             tam += result.EncryptedData.Length;
             return result;
