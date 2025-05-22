@@ -62,7 +62,7 @@ namespace NitroNetwork.Core
         [HideIf(nameof(ConnectInLan))]
         public bool Client = true; // Should this instance act as client
         private int widthBandServer, widthBandClient; // Bandwidth usage for server/client
-        [Range(1, 1000)]
+        [Range(0, 1000)]
         public uint msgForDisconnectPeer = 60;
         private ulong faseValidadeSpeed = 0;
         public List<NitroIdentity> nitroPrefabs = new(); // List of registered Nitro prefabs
@@ -778,7 +778,7 @@ namespace NitroNetwork.Core
         /// <param name="conn">The connection to validate.</param>
         private void SpeedHackValidate(NitroConn conn)
         {
-            if (conn.countMsg > msgForDisconnectPeer && conn.fase == faseValidadeSpeed)
+            if (msgForDisconnectPeer > 0 && conn.countMsg > msgForDisconnectPeer && conn.fase == faseValidadeSpeed)
             {
                 Debug.LogWarning($"Peer {conn.Id} disconnected for exceeding message limit ({conn.countMsg} > {msgForDisconnectPeer})");
                 DisconnectConn(conn);

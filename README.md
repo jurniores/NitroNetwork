@@ -423,7 +423,7 @@ NitroManager.Instance.Client;
 // Connects in LAN mode (likely initializes the LAN network). Searches for a local server; if none exists, creates one.
 NitroManager.Instance.ConnectInLan;
 // Disconnects a connection based on the number of messages sent per second.
-// This helps prevent speed hackers from exploiting the system.
+// This helps prevent speed hackers from exploiting the system. If set to 0, validation is ignored.
 NitroManager.msgForDisconnectPeer;
 // Connects the client to a server
 NitroManager.ConnectClient("127.0.0.1", 7777);
