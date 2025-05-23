@@ -346,7 +346,6 @@ namespace NitroNetwork.Core
                     return;
                 }
 
-                OnConnectConn?.Invoke(conn);
                 peers.TryAdd(conn.Id, conn);
                 SendInfoInitialForClient();
                 Debug.Log($"Peer {conn.Id} connected to server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
@@ -767,8 +766,7 @@ namespace NitroNetwork.Core
             bufferSend.Write(ServerConn.keyAes);
             bufferSend.EncriptAes(conn.keyAes);
             Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
-
-
+            OnConnectConn?.Invoke(conn);
         }
         internal static int GetMyPing(NitroConn conn)
         {
