@@ -347,7 +347,6 @@ namespace NitroNetwork.Core
                 };
 
                 var bufferDecript = NitroCriptografyAES.Decrypt(aesResult.EncryptedData, key, aesResult.IV);
-                bufferDecript.CopyTo(buffer.AsSpan(5, bufferDecript.Length));
                 bufferDecript.CopyTo(buffer.AsSpan(4, bufferDecript.Length));
                 return true;
 
