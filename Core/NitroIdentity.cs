@@ -180,9 +180,7 @@ namespace NitroNetwork.Core
 
             gameObject.SetActive(false); // Deactivates the current object
             var newIdentity = Instantiate(this); // Instantiates a new identity
-            using var buffer = NitroManager.Rent();
             // Configures the buffer for the spawn RPC
-            buffer.SetInfo((byte)NitroCommands.SpawnRPC, (int)NitroCommands.ConfigsManager);
             Id = newIdentity.Id;
             this.conn = conn;
             newIdentity.conn = conn;
@@ -191,7 +189,6 @@ namespace NitroNetwork.Core
             newIdentity.namePrefab = name;
             namePrefab = name;
             newIdentity.name = $"{name}(Server)";
-
             newIdentity.SetConfig();
 
             NitroManager.RegisterIdentity(newIdentity);
@@ -220,7 +217,6 @@ namespace NitroNetwork.Core
             buffer.Write(transform.rotation.eulerAngles);
             buffer.Write(transform.parent != null ? transform.parent.name : "");
             NitroManager.SendForClient(buffer.Buffer, conn, target: target, room: newRoom, roomValidate: room);
-            buffer.Dispose();
             return this;
         }
 

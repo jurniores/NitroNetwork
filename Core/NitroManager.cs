@@ -31,8 +31,7 @@ namespace NitroNetwork.Core
     [RequireComponent(typeof(LiteTransporter))]
     public class NitroManager : MonoBehaviour
     {
-        [ReadOnly]
-        public string publicKey, privateKey; // RSA keys for encryption
+
         internal static NitroBufferPool bufferPool; // Pool for NitroBuffer objects
         public Dictionary<string, NitroIdentity> nitroPrefabsDic = new(); // Prefab lookup by name
         public Dictionary<int, NitroConn> peers = new(); // Connected peers by ID
@@ -46,16 +45,14 @@ namespace NitroNetwork.Core
         private NitroRoom firstRoom = new NitroRoom(); // The initial room created on startup
         private NitroConn connCallManager = new(); // Helper connection for internal use
         private static NitroManager Instance; // Singleton instance
+        [Header("Config Connection")]
         public bool ConnectInLan = false; // LAN mode flag
-        private Queue<int> bandWithServer = new(); // Bandwidth usage for server
-        private Queue<int> bandWithClient = new(); // Bandwidth usage for client
-
         [SerializeField, HideIf(nameof(ConnectInLan))]
         private string address = "127.0.0.1"; // Default server address
         [SerializeField]
         private int port = 7778; // Default server port
         public static NitroConn ClientConn, ServerConn; // Static references to client/server connections
-        Transporter transporter; // Network transporter component
+        private Transporter transporter; // Network transporter component
         internal bool IsServer, IsClient; // Flags for server/client mode
         [Header("Connect"), HideIf(nameof(ConnectInLan))]
         public bool Server = true; // Should this instance act as server
@@ -64,6 +61,11 @@ namespace NitroNetwork.Core
         private int BServerSent = 0, BClientSent = 0, PServerSent = 0, PClientSent = 0, BServerReceived = 0, BClientReceived = 0, PServerReceived = 0, PClientReceived = 0; // Bandwidth usage for server/client
         [Range(0, 1000)]
         public uint msgForDisconnectPeer = 60;
+        [HideIf(nameof(usePresetRsaKeys), false)]
+        public string publicKey, privateKey; // RSA keys for encryption
+        [Header("Criptography")]
+        [Tooltip("If true, the keys will be generated automatically. If false, the keys will be used from the inspector.")]
+        public bool usePresetRsaKeys = false; // Use static keys for encryption
         private ulong faseValidadeSpeed = 0;
         public List<NitroIdentity> nitroPrefabs = new(); // List of registered Nitro prefabs
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn; // Connection event callbacks
@@ -111,7 +113,7 @@ namespace NitroNetwork.Core
             transporter.IPConnection += ReceiveIPEndPoint;
 
             // Generate RSA keys if needed
-            if (Client && Server || ConnectInLan)
+            if (!usePresetRsaKeys || ConnectInLan)
             {
                 await GenerateKeys();
             }
@@ -479,13 +481,12 @@ namespace NitroNetwork.Core
             int identityId = (message[1] & 0xFF) | ((message[2] & 0xFF) << 8) | ((message[3] & 0xFF) << 16);
 
             using var buffer = Rent();
-
             buffer.WriteForRead(message);
             buffer.Length = message.Length;
 
-
             if (IsServer)
             {
+
                 BServerReceived += message.Length;
                 PServerReceived++;
                 peers.TryGetValue(peerId, out var conn);
@@ -663,6 +664,7 @@ namespace NitroNetwork.Core
         /// </summary>
         void SpawnInClient(NitroBuffer buffer)
         {
+            print("SpawnInClient");
             var identityId = buffer.Read<int>();
             var coonId = buffer.Read<int>();
             var spawnInParent = buffer.Read<bool>();
@@ -704,7 +706,7 @@ namespace NitroNetwork.Core
             var connId = buffer.Read<int>();
             var pubKey = buffer.Read<string>();
 
-            if (Client && Server || ConnectInLan) publicKey = pubKey;
+            if (!usePresetRsaKeys || ConnectInLan) publicKey = pubKey;
 
             var conn = new NitroConn
             {
@@ -785,7 +787,7 @@ namespace NitroNetwork.Core
             if (!buffer.DecryptAes(ClientConn.keyAes)) return;
             var serverAes = buffer.Read<byte[]>();
             ServerConn.keyAes = serverAes;
-            
+
             foreach (var identity in identitiesClient)
             {
                 identity.Value.SetConfig();

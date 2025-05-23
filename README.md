@@ -471,11 +471,12 @@ It provides static methods for controlling both the server and client lifecycle,
 ### 🧪 Example Usage
 
 ```csharp
-//Enable for connections to start automatically. The private key will only not be destroyed if only the Server is enabled.
-//In other words, the private key is removed on the client during the build, increasing encryption security.
-//If you build both Server and Client, a new public and private key will be generated when the server starts and sent to clients over the network.
+//Enable for connections to start automatically.
 NitroManager.Instance.Server;
 NitroManager.Instance.Client;
+// If true, preserves the generated RSA key; if false, generates at runtime and is accepted by the client.
+// The first approach is more secure, but you must remove the private key when building for client distribution.
+NitroManager.Instance.usePresetRsaKeys;
 // Connects in LAN mode (likely initializes the LAN network). Searches for a local server; if none exists, creates one.
 NitroManager.Instance.ConnectInLan;
 // Disconnects a connection based on the number of messages sent per second.
@@ -508,7 +509,6 @@ NitroManager.GetBandWithClient();
 // These are keys used for game encryption
 NitroManager.GetPublicKey();
 NitroManager.GetPrivateKey();
-
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
 // Events triggered on peer connect/disconnect
