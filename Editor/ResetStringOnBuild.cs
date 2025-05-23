@@ -14,46 +14,61 @@ public class ResetStringOnBuild : IPreprocessBuildWithReport, IPostprocessBuildW
 
     public void OnPreprocessBuild(BuildReport report)
     {
-        NitroManager nitroManager = GameObject.FindFirstObjectByType<NitroManager>();
-        if (nitroManager != null && nitroManager.Client)
+        // Itera por todas as cenas do projeto
+        foreach (var scenePath in EditorBuildSettings.scenes)
         {
-            backupPrivateKey = nitroManager.privateKey;
-            nitroManager.privateKey = "";
-            EditorUtility.SetDirty(nitroManager);
+            if (!scenePath.enabled) continue; // Ignora cenas desativadas no build
 
-            // Salva o caminho da cena atual
-            scenePath = nitroManager.gameObject.scene.path;
-            EditorSceneManager.MarkSceneDirty(nitroManager.gameObject.scene);
+            var scene = EditorSceneManager.OpenScene(scenePath.path, OpenSceneMode.Single);
+            NitroManager nitroManager = GameObject.FindObjectOfType<NitroManager>();
+
+            if (nitroManager != null && nitroManager.Client)
+            {
+                // Salva o privateKey no EditorPrefs para garantir persistência
+                backupPrivateKey = nitroManager.privateKey;
+                EditorPrefs.SetString("NitroManager_PrivateKey", backupPrivateKey);
+
+                nitroManager.privateKey = "";
+                EditorUtility.SetDirty(nitroManager);
+
+                // Salva o caminho da cena onde o NitroManager foi encontrado
+                ResetStringOnBuild.scenePath = scenePath.path;
+                EditorSceneManager.MarkSceneDirty(scene);
+                break; // Para após encontrar o NitroManager
+            }
         }
     }
 
-  public void OnPostprocessBuild(BuildReport report)
-{
-    if (!string.IsNullOrEmpty(backupPrivateKey) && !string.IsNullOrEmpty(scenePath))
+    public void OnPostprocessBuild(BuildReport report)
     {
-        EditorApplication.delayCall += () =>
+        if (!string.IsNullOrEmpty(scenePath))
         {
-            // Reabre explicitamente a cena original
-            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-
-            NitroManager nitroManager = GameObject.FindFirstObjectByType<NitroManager>();
-            if (nitroManager != null)
+            EditorApplication.delayCall += () =>
             {
-                nitroManager.privateKey = backupPrivateKey;
+                // Reabre a cena onde o NitroManager foi encontrado
+                var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
 
-                EditorUtility.SetDirty(nitroManager);
-                EditorSceneManager.MarkSceneDirty(scene);
-                EditorSceneManager.SaveOpenScenes();
-            }
-            else
-            {
-                Debug.LogError("⚠ NitroManager not found in the scene for restoration.");
-            }
+                NitroManager nitroManager = GameObject.FindObjectOfType<NitroManager>();
+                if (nitroManager != null)
+                {
+                    // Restaura o privateKey do EditorPrefs
+                    if (EditorPrefs.HasKey("NitroManager_PrivateKey"))
+                    {
+                        backupPrivateKey = EditorPrefs.GetString("NitroManager_PrivateKey");
+                        nitroManager.privateKey = backupPrivateKey;
+                        EditorPrefs.DeleteKey("NitroManager_PrivateKey"); // Remove o backup após restaurar
+                    }
 
-            // (Opcional) Recarrega a cena anterior do editor, se quiser restaurar o estado visual
-            // EditorSceneManager.OpenScene("Assets/SuaCenaDeTrabalho.unity", OpenSceneMode.Single);
-        };
+                    EditorUtility.SetDirty(nitroManager);
+                    EditorSceneManager.MarkSceneDirty(scene);
+                    EditorSceneManager.SaveOpenScenes();
+                }
+                else
+                {
+                    Debug.LogError("⚠ NitroManager not found in the scene for restoration.");
+                }
+            };
+        }
     }
-}
 }
 #endif

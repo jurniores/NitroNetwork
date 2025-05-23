@@ -86,7 +86,6 @@ namespace NitroNetwork.Core
             ClientConn = null;
             bufferPool = new NitroBufferPool(32000);
             Instance = this;
-
             // Register default RPCs for server and client
             RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.SendAES), ReceiveKeyAesServerRPC);
             //Rpcs Clientes
@@ -348,7 +347,6 @@ namespace NitroNetwork.Core
                 OnConnectConn?.Invoke(conn);
                 peers.TryAdd(conn.Id, conn);
                 SendInfoInitialForClient();
-                firstRoom.JoinRoom(conn);
                 Debug.Log($"Peer {conn.Id} connected to server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
             }
             else
@@ -722,6 +720,7 @@ namespace NitroNetwork.Core
             bufferAes.SetInfo((byte)NitroCommands.SendAES, (int)NitroCommands.GetConnection);
             bufferAes.Write(keyAes);
             bufferAes.EncriptRSA(GetPublicKey());
+            IsClient = true;
             Send(conn, bufferAes.Buffer, DeliveryMode.ReliableOrdered, 0, false);
         }
 
@@ -760,6 +759,7 @@ namespace NitroNetwork.Core
             }
 
             conn.keyAes = keyAes;
+            firstRoom.JoinRoom(conn);
             var bufferSend = Rent();
             bufferSend.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
             bufferSend.Write(ServerConn.keyAes);
@@ -785,7 +785,7 @@ namespace NitroNetwork.Core
             if (!buffer.DecryptAes(ClientConn.keyAes)) return;
             var serverAes = buffer.Read<byte[]>();
             ServerConn.keyAes = serverAes;
-            IsClient = true;
+            
             foreach (var identity in identitiesClient)
             {
                 identity.Value.SetConfig();

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEditor;
 
@@ -192,6 +193,7 @@ namespace NitroNetwork.Core
         {
             foreach (var identity in identities)
             {
+                NitroLogs.Log($"Spawning identity {identity.Value.Id} for client {conn.Id}");
                 identity.Value.SendSpawnForClient(conn, Target.Self, newRoom: this);
             }
         }

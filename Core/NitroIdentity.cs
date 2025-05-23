@@ -47,7 +47,7 @@ namespace NitroNetwork.Core
         /// </summary>
         void Awake()
         {
-#if UNITY_EDITOR
+
             // Registers RPCs for child behaviors
             var isServer = false;
             var isClient = false;
@@ -56,7 +56,6 @@ namespace NitroNetwork.Core
             {
                 if (IsServer) DisableAllVisualComponents();
             }
-#endif
             behaviours = GetComponentsInChildren<NitroBehaviour>(true);
 
             foreach (var nb in behaviours)

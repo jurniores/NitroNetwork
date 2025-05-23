@@ -21,6 +21,7 @@ namespace NitroNetwork.Core
         public event Action<int, bool> OnDisconnected;
         public event Action<string> OnError;
         public event Action<NitroConn, bool> IPConnection;
+        public bool iPv6Enabled = false;
         [Range(0, 10)]
         public float timeWaitConnectLan = 2f;
         [Range(0, 360)]
@@ -52,7 +53,7 @@ namespace NitroNetwork.Core
 
         private void Reset()
         {
-            guidConnect = System.Guid.NewGuid().ToString();
+            guidConnect = Guid.NewGuid().ToString();
         }
 
         public void ServerConnect(string ip, int port)
@@ -61,17 +62,20 @@ namespace NitroNetwork.Core
             {
                 portServer = port;
                 NetDebug.Logger = this;
-                _netServer = new NetManager(this);
+                _netServer = new NetManager(this)
+                {
+                    IPv6Enabled = iPv6Enabled,
+                    BroadcastReceiveEnabled = true,
+                    UpdateTime = 15,
+                    DisconnectTimeout = disconnectedTimeoutSeconds * 1000,
+                    ChannelsCount = (byte)(channels + 1),
+                    SimulateLatency = SimulateLatency,
+                    SimulationMinLatency = minLatence,
+                    SimulationMaxLatency = maxLatence,
+                    SimulatePacketLoss = SimulatePacketLoss,
+                    SimulationPacketLossChance = SimulationPacketLossChance
+                };
                 _netServer.Start(port);
-                _netServer.BroadcastReceiveEnabled = true;
-                _netServer.UpdateTime = 15;
-                _netServer.DisconnectTimeout = disconnectedTimeoutSeconds * 1000;
-                _netServer.ChannelsCount = (byte)(channels + 1);
-                _netServer.SimulateLatency = SimulateLatency;
-                _netServer.SimulationMinLatency = minLatence;
-                _netServer.SimulationMaxLatency = maxLatence;
-                _netServer.SimulatePacketLoss = SimulatePacketLoss;
-                _netServer.SimulationPacketLossChance = SimulationPacketLossChance;
 
                 NitroConn conn = new NitroConn();
                 conn.Id = -1;
@@ -87,16 +91,19 @@ namespace NitroNetwork.Core
         void InfoClient(int port)
         {
             portServer = port;
-            _netClient = new NetManager(this);
-            _netClient.DisconnectTimeout = disconnectedTimeoutSeconds * 1000;
-            _netClient.ChannelsCount = (byte)(channels + 1);
-            _netClient.SimulateLatency = SimulateLatency;
-            _netClient.SimulationMinLatency = minLatence;
-            _netClient.SimulationMaxLatency = maxLatence;
-            _netClient.SimulatePacketLoss = SimulatePacketLoss;
-            _netClient.SimulationPacketLossChance = SimulationPacketLossChance;
-            _netClient.UnconnectedMessagesEnabled = true;
-            _netClient.UpdateTime = 15;
+            _netClient = new NetManager(this)
+            {
+                DisconnectTimeout = disconnectedTimeoutSeconds * 1000,
+                ChannelsCount = (byte)(channels + 1),
+                SimulateLatency = SimulateLatency,
+                SimulationMinLatency = minLatence,
+                SimulationMaxLatency = maxLatence,
+                SimulatePacketLoss = SimulatePacketLoss,
+                IPv6Enabled = iPv6Enabled,
+                SimulationPacketLossChance = SimulationPacketLossChance,
+                UnconnectedMessagesEnabled = true,
+                UpdateTime = 15
+            };
             _netClient.Start();
             _netClient.PingInterval = 1000; // Set ping interval to 1 second
         }
