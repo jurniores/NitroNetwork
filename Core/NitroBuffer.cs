@@ -70,7 +70,8 @@ namespace NitroNetwork.Core
         /// If the array is null or empty, writes two zero bytes.
         /// </summary>
         /// <param name="bytes">The byte array to write.</param>
-        private void WriteBytes(byte[] bytes)
+        
+        private void WriteBytes(Span<byte> bytes)
         {
             if (bytes == null || bytes.Length == 0)
             {
