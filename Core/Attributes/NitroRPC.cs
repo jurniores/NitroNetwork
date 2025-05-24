@@ -16,7 +16,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// The type of NitroRPC, specifying the RPC behavior (e.g., Server or Client).
         /// </summary>
-        public NitroType type;
+        public RPC type;
 
         /// <summary>
         /// Indicates whether the RPC requires the caller to be the owner of the object.
@@ -51,7 +51,7 @@ namespace NitroNetwork.Core
         /// Initializes a new instance of the <see cref="NitroRPC"/> class with the specified type.
         /// </summary>
         /// <param name="type">The type of NitroRPC (e.g., Server or Client).</param>
-        public NitroRPC(NitroType type)
+        public NitroRPC(RPC type)
         {
             this.type = type;
         }
@@ -60,7 +60,7 @@ namespace NitroNetwork.Core
     /// <summary>
     /// Enum representing the type of NitroRPC, specifying whether the RPC is for the server or client.
     /// </summary>
-    public enum NitroType
+    public enum RPC
     {
         Server,
         Client

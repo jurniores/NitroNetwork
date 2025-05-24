@@ -113,26 +113,26 @@ namespace NitroNetwork.Core
         /// Logs a debug message with the NitroBehaviour prefix.
         /// </summary>
         /// <param name="message">The message to log.</param>
-        protected bool __ReturnValidateServerCall()
+        protected bool __ReturnValidateServerCall(string nameMethod)
         {
-            if (IsClient && !IsStatic) { throw new("RPC cannot be called on the client."); }
-            if (Identity == null) throw new("Identity does not exist, insert the NetworkIdentity, or check if the identity exists");
+            if (IsClient && !IsStatic) { throw new($"RPC {nameMethod} cannot be called on the client."); }
+            if (Identity == null) throw new($"RPC {nameMethod}: Identity does not exist, insert the NetworkIdentity, or check if the identity exists");
             return true;
         }
         /// <summary>
         /// Validates the client call. Throws an exception if the call is invalid.
         /// </summary>
-        protected bool __ReturnValidateClientCall()
+        protected bool __ReturnValidateClientCall(string nameMethod)
         {
-            if (IsServer && !IsStatic) throw new("RPC cannot be called on the server.");
-            if (Identity == null) throw new("Identity does not exist, insert the NetworkIdentity, or check if the identity exists");
-            if (!IsClient) { throw new("You cannot send a message before the client connects. Use NitroManager.OnClientConnected"); }
+            if (IsServer && !IsStatic) throw new($"RPC {nameMethod} cannot be called on the server.");
+            if (Identity == null) throw new($"RPC {nameMethod}: Identity does not exist, insert the NetworkIdentity, or check if the identity exists");
+            if (!IsClient) { throw new($"RPC {nameMethod}You cannot send a message before the client connects. Use NitroManager.OnClientConnected"); }
             return true;
         }
         /// <summary>
         /// Validates the server received call. Throws an exception if the call is invalid.
         /// </summary>
-        protected bool __ReturnValidateClientReceived()
+        protected bool __ReturnValidateClientReceived(string nameMethod)
         {
             // No Error in moment
             return true;
@@ -140,11 +140,11 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Validates the server received call. Throws an exception if the call is invalid.
         /// </summary>
-        protected bool __ReturnValidateServerReceived(bool requiresOwner)
+        protected bool __ReturnValidateServerReceived(bool requiresOwner, string nameMethod)
         {
             if (requiresOwner && !Identity.IsStatic && Identity.conn.Id != Identity.callConn.Id)
             {
-                throw new("Access denied: requiresOwner is true, and the connection does not match the object's spawn connection. Identity: " + Identity.Id + " Rpc: {method.Identifier.Text} Class: {classe.Identifier.Text}");
+                throw new($"Access denied RPC {nameMethod}: requiresOwner is true, and the connection does not match the object's spawn connection. Identity: " + Identity.Id + " Rpc: {method.Identifier.Text} Class: {classe.Identifier.Text}");
             }
             return true;
         }

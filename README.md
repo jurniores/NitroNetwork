@@ -11,7 +11,7 @@ This repository contains an example implementation of a basic connection flow be
 This script demonstrates how to automatically connect a client to the server when the scene starts. It also shows how to use RPCs to send messages between peers.
 
 ### ✅ Features:
-- Uses `[NitroRPC(NitroType.Server)]` to call a server-only method from the client.
+- Uses `[NitroRPC(RPC.Server)]` to call a server-only method from the client.
 - Ensures the object exists in all peers using `NitroStatic`.
 - Inherits from `NitroBehaviour` to enable network features.
 - When using static, choose an Id for it; the default is 0
@@ -34,14 +34,14 @@ public partial class ConnectPeers : NitroBehaviour
         }
     }
     // RPC method that will be executed on the server when called by a client.
-    [NitroRPC(NitroType.Server)]
+    [NitroRPC(RPC.Server)]
     void ConnectToServer()
     {
         Debug.Log("ConnectToServer");
         CallConnectToClient();
     }
     
-    [NitroRPC(NitroType.Client)]
+    [NitroRPC(RPC.Client)]
     void ConnectToClient()
     {
         Debug.Log("Hello Client");
@@ -115,13 +115,13 @@ void Start()
     // Logic to trigger RPCs
 }
 
-[NitroRPC(NitroType.Server)]
+[NitroRPC(RPC.Server)]
 void MethodOfServer()
 {
     print("Hello Server");
 }
 
-[NitroRPC(NitroType.Client)]
+[NitroRPC(RPC.Client)]
 void MethodOfClient()
 {
     Debug.Log("Hello Client");
@@ -136,12 +136,12 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 
 | Parameter       | Type            | Default Value                   | Description                                                                                       |
 |-----------------|-----------------|---------------------------------|---------------------------------------------------------------------------------------------------|
-| `type`          | `NitroType`     | **Required**                    | Specifies whether the RPC is for the `Server` or `Client`.                                        |
+| `type`          | `RPC`     | **Required**                    | Specifies whether the RPC is for the `Server` or `Client`.                                        |
 | `requiresOwner` | `bool`          | `true`                          | Indicates if the caller must own the object to invoke the RPC.                                    |
-| `target`        | `Target`        | `Target.All`                    | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). **Only used for `NitroType.Client` RPCs.** |
+| `target`        | `Target`        | `Target.All`                    | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). **Only used for `RPC.Client` RPCs.** |
 | `deliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered`  | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).                            |
 | `channel`       | `int`           | `0`                             | Specifies the communication channel for the RPC.                                                  |
-| `encrypt`   | `bool`          | `false`                         | If `true` and `NitroType.Server`, the message is encrypted with the client's AES key. If `NitroType.Client`, it is encrypted with the server's public key. For increased security and to avoid `MITM` attacks, use `Target.Self`, the server will encrypt with the client's key and send only to that client. |
+| `encrypt`   | `bool`          | `false`                         | If `true` and `RPC.Server`, the message is encrypted with the client's AES key. If `RPC.Client`, it is encrypted with the server's public key. For increased security and to avoid `MITM` attacks, use `Target.Self`, the server will encrypt with the client's key and send only to that client. |
 
 ---
 
@@ -156,7 +156,7 @@ public partial class MyNetworkScript : NitroBehaviour
     }
 
     // Server-side RPC
-    [NitroRPC(NitroType.Server, requiresOwner = true)]
+    [NitroRPC(RPC.Server, requiresOwner = true)]
     void ServerMethod()
     {
         Debug.Log("This method runs on the server.");
@@ -164,7 +164,7 @@ public partial class MyNetworkScript : NitroBehaviour
     }
 
     // Client-side RPC
-    [NitroRPC(NitroType.Client, target = Target.AllExceptSelf, deliveryMode = DeliveryMode.Sequenced)]
+    [NitroRPC(RPC.Client, target = Target.AllExceptSelf, deliveryMode = DeliveryMode.Sequenced)]
     void ClientMethod()
     {
         Debug.Log("This method runs on all clients except the caller.");
@@ -242,20 +242,20 @@ These limits apply to the total number of RPC methods defined across all `NitroB
 [RequireComponent(typeof(NitroIdentity))]
 public partial class PlayerMovement : NitroBehaviour
 {
-    [NitroRPC(NitroType.Server)]
+    [NitroRPC(RPC.Server)]
     void MovePlayer(Vector3 position) { /* ... */ }
     
-    [NitroRPC(NitroType.Client)]
+    [NitroRPC(RPC.Client)]
     void SyncPosition(Vector3 position) { /* ... */ }
 }
 
 // PlayerCombat.cs - Attached to the same GameObject
 public partial class PlayerCombat : NitroBehaviour
 {
-    [NitroRPC(NitroType.Server)]
+    [NitroRPC(RPC.Server)]
     void AttackTarget(int targetId) { /* ... */ }
     
-    [NitroRPC(NitroType.Client)]
+    [NitroRPC(RPC.Client)]
     void PlayAttackAnimation(int animId) { /* ... */ }
 }
 ```
@@ -284,7 +284,7 @@ public partial class ConnectPeers : NitroBehaviour
     /// <summary>
     /// Server-side RPC that spawns a prefab and assigns it to the connecting client.
     /// </summary>
-    [NitroRPC(NitroType.Server)]
+    [NitroRPC(RPC.Server)]
     void SpawnServer()
     {
         var prefab = NitroManager.GetPrefab("Player");
@@ -294,7 +294,7 @@ public partial class ConnectPeers : NitroBehaviour
     /// <summary>
     /// Client-side RPC. Called by the server to send feedback to the player.
     /// </summary>
-    [NitroRPC(NitroType.Client)]
+    [NitroRPC(RPC.Client)]
     void ConnectToClient()
     {
         Debug.Log("Hello Client");

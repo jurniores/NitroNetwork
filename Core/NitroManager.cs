@@ -663,7 +663,6 @@ namespace NitroNetwork.Core
         /// </summary>
         void SpawnInClient(NitroBuffer buffer)
         {
-            print("SpawnInClient");
             var identityId = buffer.Read<int>();
             var coonId = buffer.Read<int>();
             var spawnInParent = buffer.Read<bool>();
