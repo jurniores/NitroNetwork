@@ -122,7 +122,6 @@ public partial class NitroTransform : NitroBehaviour
     [NitroRPC(RPC.Server, DeliveryMode = DeliveryMode.Sequenced)]
     void ReceiveMove(byte[] move)
     {
-        print("Recebendo rot");
         ReadDelta(move, ref moviment, ref rotation);
         IsMoving = true; // Start moving
         CallReceiveMoveInEnemy(move); // Notify other clients
@@ -150,6 +149,5 @@ public partial class NitroTransform : NitroBehaviour
     {
         ReadDelta(move, ref moviment, ref rotation);
         IsMoving = true; // Start moving
-        print("Recebi o receive");
     }
 }
