@@ -535,51 +535,69 @@ It provides static methods for controlling both the server and client lifecycle,
 //Enable for connections to start automatically.
 NitroManager.Instance.Server;
 NitroManager.Instance.Client;
+
 // If true, preserves the generated RSA key; if false, generates at runtime and is accepted by the client.
 // The first approach is more secure, but you must remove the private key when building for client distribution.
 NitroManager.Instance.usePresetRsaKeys;
+
 // Connects in LAN mode (likely initializes the LAN network). Searches for a local server; if none exists, creates one.
 NitroManager.Instance.ConnectInLan;
+
 // Disconnects a connection based on the number of messages sent per second.
 // This helps prevent speed hackers from exploiting the system. If set to 0, validation is ignored.
 NitroManager.msgForDisconnectPeer;
+
 // Connects the client to a server
 NitroManager.ConnectClient("127.0.0.1", 7777);
+
 // Starts the server on the specified port
 NitroManager.ConnectServer(7777);
+
 // Disconnects the current active client or server
 NitroManager.Disconnect();
+
 // Disconnects a specific client by its connection object
 NitroManager.DisconnectConn(Identity.conn);
+
 // Removes a specific room instance
 NitroManager.RemoveRoom(room);
+
 // Gets the first (default/universal) room
 NitroManager.GetFirstRoom();
+
 // Checks whether a room is registered
 NitroManager.RoomExists(room);
+
+//Adds a prefab to the list of spawnable prefabs
+NitroManager.AddPrefab(NitroIdentity prefab)
+
 // Fetches a prefab by ID (int)
 NitroManager.GetPrefab(1);
+
 // Fetches a prefab by name (string)
 NitroManager.GetPrefab("Player");
+
 // Returns the current ping (latency in milliseconds) for the connected client.
 // Useful for displaying network quality or debugging connection issues.
 NitroManager.GetPingClient();
-// Methods to get the bandwidth usage
-NitroManager.GetBandWithServer();
-NitroManager.GetBandWithClient();
+
 // These are keys used for game encryption
 NitroManager.GetPublicKey();
 NitroManager.GetPrivateKey();
+
 // Creates a new room with the given ID
 var room = NitroManager.CreateRoom("Room1");
+
 // Events triggered on peer connect/disconnect
 NitroManager.OnConnectConn;
 NitroManager.OnDisconnectConn;
+
 //Events fired on your server and client when you are connected
 NitroManager.OnClientConnected;
-//Events BandWidth
-NitroManager.OnBandWidthServer;
-NitroManager.OnBandWidthClient;
+
+//Event BandWidth Server and Client
+NitroManager.OnBandWidth
+
 //Events Ping Client
 NitroManager.OnPingClient;
 

@@ -321,20 +321,6 @@ namespace NitroNetwork.Core
             return Instance.transporter.GetPingClient();
         }
         /// <summary>
-        /// Gets the public key for encryption.
-        /// </summary>
-        public static int GetBandWidthServer()
-        {
-            return Instance.BServerSent;
-        }
-        /// <summary>
-        /// Gets the public key for encryption.
-        /// </summary>
-        public static int GetBandWidthClient()
-        {
-            return Instance.BClientSent;
-        }
-        /// <summary>
         /// Handles peer connection events for both server and client.
         /// </summary>
         private void OnPeerConnected(NitroConn conn, bool IsServer)
@@ -626,7 +612,21 @@ namespace NitroNetwork.Core
                 Destroy(identity.gameObject);
             }
         }
-
+        /// <summary>
+        /// Adds a Nitro prefab to the manager.
+        /// </summary>
+        public static void AddPrefab(NitroIdentity prefab)
+        {
+            if (prefab == null) return;
+            if (Instance.nitroPrefabsDic.TryAdd(prefab.name, prefab))
+            {
+                Instance.nitroPrefabs.Add(prefab);
+            }
+            else
+            {
+                Debug.LogError($"Failed to add prefab {prefab.name} to dictionary.");
+            }
+        }
         /// <summary>
         /// Retrieves a Nitro prefab by name.
         /// </summary>
