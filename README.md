@@ -170,6 +170,29 @@ public partial class MyNetworkScript : NitroBehaviour
         Debug.Log("This method runs on all clients except the caller.");
     }
 }
+
+```
+
+### ☎️ Calling RPCs (Always Use `Call` Prefix)
+
+```csharp
+if (IsClient || IsMine)
+{
+    CallMethodOfServer(); // Client → Server
+}
+
+if (IsServer)
+{
+    CallMethodOfClient(); // Server → Client
+}
+
+```
+> ⚠️ Always use the `Call` prefix. Never invoke the method directly.
+
+⚠️ Static Variable Warning
+A note: always be careful with static variables, as they are not bound to any specific connection and can cause silent errors. Make sure you're always calling the method from the opposite network context (e.g., client calling a server method, and vice versa).
+
+
 # 🧩 Delta Compression System
 
 This module implements an efficient **Delta Compression** system for `Vector3` and `Quaternion` structures. It is ideal for reducing data traffic when synchronizing state in network systems, sending only the differences between states.
@@ -189,6 +212,7 @@ This module implements an efficient **Delta Compression** system for `Vector3` a
 ### Generating and sending a `Vector3` delta
 
 ```csharp
+
 Vector3 current = new Vector3(1, 2, 3);
 Vector3 previous = new Vector3(1, 2, 0);
 
@@ -228,26 +252,8 @@ ReadDelta(byte[] buffer, ref Quaternion newQ, ref Quaternion newQ2);
 
 
 
-
-```
-### ☎️ Calling RPCs (Always Use `Call` Prefix)
-
-```csharp
-if (IsClient || IsMine)
-{
-    CallMethodOfServer(); // Client → Server
-}
-
-if (IsServer)
-{
-    CallMethodOfClient(); // Server → Client
-}
 ```
 
-> ⚠️ Always use the `Call` prefix. Never invoke the method directly.
-
-⚠️ Static Variable Warning
-A note: always be careful with static variables, as they are not bound to any specific connection and can cause silent errors. Make sure you're always calling the method from the opposite network context (e.g., client calling a server method, and vice versa).
 
 ## 🧱 Spawning Networked Objects
 
