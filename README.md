@@ -138,8 +138,8 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 |-----------------|-----------------|---------------------------------|---------------------------------------------------------------------------------------------------|
 | `type`          | `RPC`     | **Required**                    | Specifies whether the RPC is for the `Server` or `Client`.                                        |
 | `requiresOwner` | `bool`          | `true`                          | Indicates if the caller must own the object to invoke the RPC.                                    |
-| `target`        | `Target`        | `Target.All`                    | Defines the target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). **Only used for `RPC.Client` RPCs.** |
-| `deliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered`  | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).                            |
+| `Target`        | `Target`        | `Target.All`                    | Defines the Target audience for the RPC (e.g., `All`, `AllExceptSelf`, `Self`). **Only used for `RPC.Client` RPCs.** |
+| `DeliveryMode`  | `DeliveryMode`  | `DeliveryMode.ReliableOrdered`  | Specifies the delivery method (e.g., `ReliableOrdered`, `Unreliable`).                            |
 | `channel`       | `int`           | `0`                             | Specifies the communication channel for the RPC.                                                  |
 | `encrypt`   | `bool`          | `false`                         | If `true` and `RPC.Server`, the message is encrypted with the client's AES key. If `RPC.Client`, it is encrypted with the server's public key. For increased security and to avoid `MITM` attacks, use `Target.Self`, the server will encrypt with the client's key and send only to that client. |
 
@@ -164,12 +164,71 @@ public partial class MyNetworkScript : NitroBehaviour
     }
 
     // Client-side RPC
-    [NitroRPC(RPC.Client, target = Target.AllExceptSelf, deliveryMode = DeliveryMode.Sequenced)]
+    [NitroRPC(RPC.Client, Target = Target.AllExceptSelf, DeliveryMode = DeliveryMode.Sequenced)]
     void ClientMethod()
     {
         Debug.Log("This method runs on all clients except the caller.");
     }
 }
+# 🧩 Delta Compression System
+
+This module implements an efficient **Delta Compression** system for `Vector3` and `Quaternion` structures. It is ideal for reducing data traffic when synchronizing state in network systems, sending only the differences between states.
+
+---
+
+## ✅ How It Works
+
+- **Bitmask (`byte`)**: Indicates which components (`x`, `y`, `z`, `w`) have changed.
+- **Optimized Serialization**: Only the modified components are transmitted.
+- **Performance**: Minimizes allocations and bandwidth usage by utilizing `NitroManager` for buffer pooling.
+
+---
+
+## 🛠️ Usage Example
+
+### Generating and sending a `Vector3` delta
+
+```csharp
+Vector3 current = new Vector3(1, 2, 3);
+Vector3 previous = new Vector3(1, 2, 0);
+
+// Generate delta only for the components that changed
+byte[] deltaBuffer = Delta(current, ref previous);
+
+// Send deltaBuffer over the network...
+
+//In receiving RPC  
+ReadDelta(deltaBuffer, ref receivedVector);
+
+
+//overloads
+//Write
+byte[] Delta(Vector3 delta, ref Vector3 compare);
+
+byte[] Delta(Quaternion delta, ref Quaternion compare);
+
+byte[] Delta(Vector3 delta, Quaternion delta2, ref Vector3 compareV, ref Quaternion compareQ);
+
+byte[] Delta(Vector3 delta1, Vector3 delta2, ref Vector3 compareV, ref Vector3 compareV2);
+
+byte[] Delta(Quaternion delta1, Quaternion delta2, ref Quaternion compareV, ref Quaternion compareQ);
+
+
+//overloads
+//Read
+ReadDelta(byte[] buffer, ref Vector3 newV);
+
+ReadDelta(byte[] buffer, ref Quaternion newQ);
+
+ReadDelta(byte[] buffer, ref Vector3 newV, ref Quaternion newQ);
+
+ReadDelta(byte[] buffer, ref Vector3 newV, ref Vector3 newV2);
+
+ReadDelta(byte[] buffer, ref Quaternion newQ, ref Quaternion newQ2);
+
+
+
+
 ```
 ### ☎️ Calling RPCs (Always Use `Call` Prefix)
 
@@ -253,7 +312,7 @@ public partial class PlayerMovement : NitroBehaviour
 public partial class PlayerCombat : NitroBehaviour
 {
     [NitroRPC(RPC.Server)]
-    void AttackTarget(int targetId) { /* ... */ }
+    void AttackTarget(int TargetId) { /* ... */ }
     
     [NitroRPC(RPC.Client)]
     void PlayAttackAnimation(int animId) { /* ... */ }
@@ -371,7 +430,7 @@ NitroRoom nitroRoom = NitroManager.CreateRoom("RoomTest", false);
 
 When you assign a `NitroIdentity` to a room using `AddIdentity(identity)`:
 
-- ✅ It will be **spawned** (i.e., become visible and synchronized) for all clients that are currently in the **target room**.
+- ✅ It will be **spawned** (i.e., become visible and synchronized) for all clients that are currently in the **Target room**.
 - ❌ It will be **destroyed** (unspawned) for all clients that were in the **previous room**.
 - 🌀 If the identity was not part of any room before, it is automatically assigned to the **default universal room**.
 
@@ -433,6 +492,8 @@ nitroRoom.autoDestroy = false;
 // Removes the specified connection from the room,
 // and destroys all identities (from that room) for that connection
 nitroRoom.LeaveRoom(Identity.callConn);
+
+
 ```
 ## 🔗 NitroConn: Managing Peer Connections
 

@@ -9,43 +9,43 @@ namespace NitroNetwork.Core
     /// </summary>
     /// <remarks>
     /// This attribute is used to configure the behavior of RPCs, including the type of RPC,
-    /// ownership requirements, target audience, delivery mode, and communication channel.
+    /// ownership requirements, Target audience, delivery mode, and communication channel.
     /// </remarks>
     public class NitroRPC : Attribute
     {
         /// <summary>
         /// The type of NitroRPC, specifying the RPC behavior (e.g., Server or Client).
         /// </summary>
-        public RPC type;
+        public RPC Type;
 
         /// <summary>
         /// Indicates whether the RPC requires the caller to be the owner of the object.
         /// Default is <c>true</c>.
         /// </summary>
-        public bool requiresOwner = true;
+        public bool RequiresOwner = true;
         /// <summary>
         /// Indicates whether the RPC should be encrypted.
         /// Default is <c>false</c>.
         /// </summary>
-        public bool encrypt = false;
+        public bool Encrypt = false;
 
         /// <summary>
-        /// Specifies the target audience for the RPC, for Client RPC.
+        /// Specifies the Target audience for the RPC, for Client RPC.
         /// Default is <see cref="Target.All"/>.
         /// </summary>
-        public Target target = Target.All;
+        public Target Target = Target.All;
 
         /// <summary>
         /// Defines the delivery mode for the RPC, such as reliable or unreliable.
         /// Default is <see cref="DeliveryMode.ReliableOrdered"/>.
         /// </summary>
-        public DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered;
+        public DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered;
 
         /// <summary>
         /// Specifies the communication channel for the RPC.
         /// Default is <c>0</c>.
         /// </summary>
-        public byte channel = 0;
+        public byte Channel = 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NitroRPC"/> class with the specified type.
@@ -53,7 +53,7 @@ namespace NitroNetwork.Core
         /// <param name="type">The type of NitroRPC (e.g., Server or Client).</param>
         public NitroRPC(RPC type)
         {
-            this.type = type;
+            this.Type = type;
         }
     }
 

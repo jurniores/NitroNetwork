@@ -267,9 +267,9 @@ namespace NitroNetwork.Core
                 _netClient.FirstPeer?.Send(msg, channel, GetDeliveryMethod(deliveryMethod));
             }
         }
-        private DeliveryMethod GetDeliveryMethod(DeliveryMode deliveryMode)
+        private DeliveryMethod GetDeliveryMethod(DeliveryMode DeliveryMode)
         {
-            return deliveryMode switch
+            return DeliveryMode switch
             {
                 DeliveryMode.ReliableOrdered => DeliveryMethod.ReliableOrdered,
                 DeliveryMode.ReliableSequenced => DeliveryMethod.ReliableSequenced,
@@ -277,7 +277,7 @@ namespace NitroNetwork.Core
                 DeliveryMode.Unreliable => DeliveryMethod.Unreliable,
                 DeliveryMode.Sequenced => DeliveryMethod.Sequenced,
                 _ => throw new NotImplementedException(
-                     $"[LiteTransporter] Unsupported delivery mode '{deliveryMode}'"),
+                     $"[LiteTransporter] Unsupported delivery mode '{DeliveryMode}'"),
             };
         }
     }

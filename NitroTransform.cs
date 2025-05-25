@@ -8,13 +8,14 @@ public partial class NitroTransform : NitroBehaviour
     public int TickRate;
 
     // Movement speed of the player
-    public float Speed = 5f;
+    public float Speed = 5f, SpeedRot = 5f;
 
     // Cached reference to the Transform component for performance optimization
     private Transform _transform;
 
     // Target position the player is moving towards
     private Vector3 moviment;
+    private Quaternion rotation;
 
     // Flags to indicate if the player is moving or has stopped
     private bool IsMoving = true, Stop = false;
@@ -49,36 +50,41 @@ public partial class NitroTransform : NitroBehaviour
             if (elapsedTime >= 1f / TickRate)
             {
                 // If the player's position has changed, notify the server
-                if (!IsPositionEqual(transform.position, moviment))
+                if (!IsPositionEqual(_transform.position, moviment))
                 {
                     Stop = false; // Player is moving
-                    CallReceiveMove(transform.position); // Notify the server of the new position
+                    CallReceiveMove(Delta(_transform.position, _transform.rotation, ref moviment, ref rotation)); // Notify the server of the new position
+                }
+                if (_transform.rotation != rotation)
+                {
+                    CallReceiveMove(Delta(_transform.position, _transform.rotation, ref moviment, ref rotation)); // Notify the server of the new position
                 }
                 // If the player has stopped moving, notify the server
-                else if (!Stop && IsPositionEqual(transform.position, moviment))
+                else if (!Stop && IsPositionEqual(_transform.position, moviment))
                 {
                     Stop = true; // Player has stopped
-                    CallStopServeR(transform.position); // Notify the server of the stop
+                    CallStopServeR(_transform.position); // Notify the server of the stop
                 }
 
                 // Reset the elapsed time
                 elapsedTime = 0f;
             }
 
-            // Update the target position to the current position
-            moviment = transform.position;
+            // Update the Target position to the current position
+            moviment = _transform.position;
+            rotation = _transform.rotation;
         }
-
+        _transform.rotation = Quaternion.RotateTowards(_transform.rotation, rotation, SpeedRot * 10 * Time.deltaTime);
         // Logic for remote players
         if (!IsMine && IsMoving)
         {
-            // Smoothly move the player towards the target position
+            // Smoothly move the player towards the Target position
             _transform.position = Vector3.MoveTowards(_transform.position, moviment, Speed * Time.deltaTime);
 
-            // Check if the player has reached the target position
+            // Check if the player has reached the Target position
             if (IsPositionEqual(_transform.position, moviment))
             {
-                _transform.position = moviment; // Snap to the target position
+                _transform.position = moviment; // Snap to the Target position
                 IsMoving = false; // Stop the movement
             }
         }
@@ -97,13 +103,14 @@ public partial class NitroTransform : NitroBehaviour
 
     /// <summary>
     /// Called by the server to notify that the player has stopped moving.
-    /// Updates the target position but does not adjust the player's position directly.
+    /// Updates the Target position but does not adjust the player's position directly.
     /// </summary>
     /// <param name="move">The position where the player stopped.</param>
     [NitroRPC(RPC.Server)]
     void StopServeR(Vector3 move)
     {
-        moviment = move; // Update the target position
+        moviment = move; // Update the Target position
+
         CallReceiveMoveStop(move); // Notify other clients
     }
 
@@ -112,23 +119,25 @@ public partial class NitroTransform : NitroBehaviour
     /// Starts the movement towards the new position.
     /// </summary>
     /// <param name="move">The new position to move towards.</param>
-    [NitroRPC(RPC.Server, deliveryMode = DeliveryMode.Sequenced)]
-    void ReceiveMove(Vector3 move)
+    [NitroRPC(RPC.Server, DeliveryMode = DeliveryMode.Sequenced)]
+    void ReceiveMove(byte[] move)
     {
-        moviment = move; // Update the target position
+        print("Recebendo rot");
+        ReadDelta(move, ref moviment, ref rotation);
         IsMoving = true; // Start moving
-        CallReceiveMoveInEnemy(transform.position); // Notify other clients
+        CallReceiveMoveInEnemy(move); // Notify other clients
     }
 
     /// <summary>
     /// Called by the server to notify other clients that the player has stopped moving.
-    /// Updates the target position but does not adjust the player's position directly.
+    /// Updates the Target position but does not adjust the player's position directly.
     /// </summary>
     /// <param name="move">The position where the player stopped.</param>
-    [NitroRPC(RPC.Client, target = Target.ExceptSelf)]
+    [NitroRPC(RPC.Client, Target = Target.ExceptSelf)]
     void ReceiveMoveStop(Vector3 move)
     {
-        moviment = move; // Update the target position
+        moviment = move; // Update the Target position
+
     }
 
     /// <summary>
@@ -136,10 +145,11 @@ public partial class NitroTransform : NitroBehaviour
     /// Starts the movement towards the new position.
     /// </summary>
     /// <param name="move">The new position to move towards.</param>
-    [NitroRPC(RPC.Client, target = Target.ExceptSelf, deliveryMode = DeliveryMode.Sequenced)]
-    void ReceiveMoveInEnemy(Vector3 move)
+    [NitroRPC(RPC.Client, Target = Target.ExceptSelf, DeliveryMode = DeliveryMode.Sequenced)]
+    void ReceiveMoveInEnemy(byte[] move)
     {
-        moviment = move; // Update the target position
+        ReadDelta(move, ref moviment, ref rotation);
         IsMoving = true; // Start moving
+        print("Recebi o receive");
     }
 }

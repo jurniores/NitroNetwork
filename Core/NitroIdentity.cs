@@ -202,10 +202,10 @@ namespace NitroNetwork.Core
         /// Sends a spawn RPC to the client.
         /// </summary>
         /// <param name="conn">The connection to send the spawn RPC to.</param>
-        /// <param name="target">The target audience for the spawn RPC.</param>
+        /// <param name="Target">The Target audience for the spawn RPC.</param>
         /// <param name="room">The room associated with the spawn RPC.</param>
         /// <returns>The current NitroIdentity.</returns>
-        internal NitroIdentity SendSpawnForClient(NitroConn conn = null, Target target = Target.All, NitroRoom newRoom = null)
+        internal NitroIdentity SendSpawnForClient(NitroConn conn = null, Target Target = Target.All, NitroRoom newRoom = null)
         {
             using var buffer = NitroManager.Rent();
             buffer.SetInfo((byte)NitroCommands.SpawnRPC, (int)NitroCommands.ConfigsManager);
@@ -216,7 +216,7 @@ namespace NitroNetwork.Core
             buffer.Write(transform.position);
             buffer.Write(transform.rotation.eulerAngles);
             buffer.Write(transform.parent != null ? transform.parent.name : "");
-            NitroManager.SendForClient(buffer.Buffer, conn, target: target, room: newRoom, roomValidate: room);
+            NitroManager.SendForClient(buffer.Buffer, conn, Target: Target, room: newRoom, roomValidate: room);
             return this;
         }
 
@@ -224,14 +224,14 @@ namespace NitroNetwork.Core
         /// Sends a destroy RPC to the client.
         /// </summary>
         /// <param name="conn">The connection to send the destroy RPC to.</param>
-        /// <param name="target">The target audience for the destroy RPC.</param>
+        /// <param name="Target">The Target audience for the destroy RPC.</param>
         /// <param name="room">The room associated with the destroy RPC.</param>
-        internal void SendDestroyForClient(NitroConn conn = null, Target target = Target.All, NitroRoom newRoom = null)
+        internal void SendDestroyForClient(NitroConn conn = null, Target Target = Target.All, NitroRoom newRoom = null)
         {
             var buffer = new NitroBuffer();
             buffer.SetInfo((byte)NitroCommands.DespawnIdentity, (int)NitroCommands.ConfigsManager);
             buffer.Write(Id);
-            NitroManager.SendForClient(buffer.Buffer, conn, target: target, room: room, roomValidate: newRoom);
+            NitroManager.SendForClient(buffer.Buffer, conn, Target: Target, room: room, roomValidate: newRoom);
         }
 
         /// <summary>

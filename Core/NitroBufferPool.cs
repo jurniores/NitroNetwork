@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace NitroNetwork.Core
 {
@@ -32,6 +34,10 @@ namespace NitroNetwork.Core
         /// Internal queue holding available NitroBuffer instances.
         /// </summary>
         private readonly Queue<NitroBuffer> _pool;
+        private readonly Dictionary<int, Queue<NitroBuffer>> _poolDelta;
+        List<int> keys = new(){
+            1,5,9,13,17,21,25,29,33
+        };
 
         /// <summary>
         /// Initializes a new instance of the NitroBufferPool class with the specified buffer capacity and pool size.
@@ -42,9 +48,19 @@ namespace NitroNetwork.Core
         {
             DefaultCapacity = capacity;
             _pool = new Queue<NitroBuffer>();
+            _poolDelta = new Dictionary<int, Queue<NitroBuffer>>();
             for (int i = 0; i < poolSize; i++)
             {
                 _pool.Enqueue(new NitroBuffer(capacity, i));
+            }
+
+            foreach (var key in keys)
+            {
+                _poolDelta.Add(key, new Queue<NitroBuffer>());
+                for (int i = 0; i < 100; i++)
+                {
+                    _poolDelta[key].Enqueue(new NitroBuffer(key, i));
+                }
             }
         }
 
@@ -66,6 +82,20 @@ namespace NitroNetwork.Core
             }
         }
 
+        public NitroBuffer RentDelta(int key)
+        {
+            if (_poolDelta[key].Count > 0)
+            {
+                var buffer = _poolDelta[key].Dequeue();
+                return buffer;
+            }
+            else
+            {
+                Debug.Log("criando um novo buffer");
+                return new NitroBuffer(DefaultCapacity, _pool.Count + 1);
+            }
+        }
+
         // Let's track the object and check if it's back in the pool.
         // Very slow operation, but useful for debugging. Debug mode only.
 
@@ -75,6 +105,11 @@ namespace NitroNetwork.Core
         /// <param name="_buffer">The NitroBuffer instance to return.</param>
         public void Return(NitroBuffer _buffer)
         {
+            if (_poolDelta.ContainsKey(_buffer.buffer.Length))
+            {
+                _poolDelta[_buffer.buffer.Length].Enqueue(_buffer);
+                return;
+            }
             _pool.Enqueue(_buffer);
         }
     }

@@ -62,20 +62,20 @@ namespace NitroNetwork.Core
         /// Sends a message to the server using the specified delivery mode and channel.
         /// </summary>
         /// <param name="message">The message data to send.</param>
-        /// <param name="deliveryMode">The delivery mode (default: ReliableOrdered).</param>
+        /// <param name="DeliveryMode">The delivery mode (default: ReliableOrdered).</param>
         /// <param name="channel">The channel to use (default: 0).</param>
-        protected void __SendForServer(Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
+        protected void __SendForServer(Span<byte> message, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-            NitroManager.SendForServer(message, deliveryMode, channel);
+            NitroManager.SendForServer(message, DeliveryMode, channel);
         }
         /// <summary>
-        /// Sends a message to clients, with options for target, delivery mode, and channel.
+        /// Sends a message to clients, with options for Target, delivery mode, and channel.
         /// </summary>
         /// <param name="message">The message data to send.</param>
-        /// <param name="target">The target clients (default: All).</param>
-        /// <param name="deliveryMode">The delivery mode (default: ReliableOrdered).</param>
+        /// <param name="Target">The Target clients (default: All).</param>
+        /// <param name="DeliveryMode">The delivery mode (default: ReliableOrdered).</param>
         /// <param name="channel">The channel to use (default: 0).</param>
-        protected void __SendForClient(Span<byte> message, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
+        protected void __SendForClient(Span<byte> message, Target Target = Target.All, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
             if (Identity.IsStatic)
             {
@@ -85,9 +85,424 @@ namespace NitroNetwork.Core
                     return;
                 }
             }
-
-            NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, target: target, deliveryMode: deliveryMode, channel: channel);
+            NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, Target: Target, DeliveryMode: DeliveryMode, channel: channel);
             Identity.callConn = Identity.conn;
+        }
+        /// <summary>
+        /// Delta function for Vector3. It compares the delta with a reference vector and returns a byte array.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static byte[] Delta(Vector3 delta, ref Vector3 compare)
+        {
+            using var buffer = NitroManager.Rent();
+            byte mask = 0;
+            buffer.Write(mask);
+            if (compare.x != delta.x)
+            {
+                mask |= 0b00000001; // Set the first bit to true
+                compare.x = delta.x;
+                buffer.Write(delta.x);
+            }
+            if (compare.y != delta.y)
+            {
+                mask |= 0b00000010; // Set the second bit to true
+                compare.y = delta.y;
+                buffer.Write(delta.y);
+            }
+            if (compare.z != delta.z)
+            {
+                mask |= 0b00000100; // Set the third bit to true
+                compare.z = delta.z;
+                buffer.Write(delta.z);
+            }
+            buffer.buffer[4] = mask;
+            using var newArray = NitroManager.RentDelta(buffer.tam - 4);
+            newArray.WriteForRead(buffer.Buffer[4..]);
+            return newArray.buffer;
+        }
+        /// <summary>
+        /// Delta function for Quaternion. It compares the delta with a reference quaternion and returns a byte array.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static byte[] Delta(Quaternion delta, ref Quaternion compare)
+        {
+            using var buffer = NitroManager.Rent();
+            byte mask = 0;
+            buffer.Write(mask);
+            if (compare.x != delta.x)
+            {
+                mask |= 0b00000001; // Set the first bit to true
+                compare.x = delta.x;
+                buffer.Write(delta.x);
+            }
+            if (compare.y != delta.y)
+            {
+                mask |= 0b00000010; // Set the second bit to true
+                compare.y = delta.y;
+                buffer.Write(delta.y);
+            }
+            if (compare.z != delta.z)
+            {
+                mask |= 0b00000100; // Set the third bit to true
+                compare.z = delta.z;
+                buffer.Write(delta.z);
+            }
+            if (compare.w != delta.w)
+            {
+                mask |= 0b00001000; // Set the fourth bit to true
+                compare.w = delta.w;
+                buffer.Write(delta.w);
+            }
+            buffer.buffer[4] = mask;
+            using var newArray = NitroManager.RentDelta(buffer.tam - 4);
+            newArray.WriteForRead(buffer.Buffer[4..]);
+            return newArray.buffer;
+        }
+        /// <summary>
+        /// Delta function for Vector3. It compares the delta with a reference vector and returns a byte array.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static byte[] Delta(Vector3 delta, Vector3 delta2, ref Vector3 compare, ref Vector3 compare2)
+        {
+            using var buffer = NitroManager.Rent();
+            byte mask = 0;
+            buffer.Write(mask);
+            if (compare.x != delta.x)
+            {
+                mask |= 0b00000001; // Set the first bit to true
+                compare.x = delta.x;
+                buffer.Write(delta.x);
+            }
+            if (compare.y != delta.y)
+            {
+                mask |= 0b00000010; // Set the second bit to true
+                compare.y = delta.y;
+                buffer.Write(delta.y);
+            }
+            if (compare.z != delta.z)
+            {
+                mask |= 0b00000100; // Set the third bit to true
+                compare.z = delta.z;
+                buffer.Write(delta.z);
+            }
+            if (compare2.x != delta2.x)
+            {
+                mask |= 0b00001000; // Set the fourth bit to true
+                compare2.x = delta2.x;
+                buffer.Write(delta2.x);
+            }
+            if (compare2.y != delta2.y)
+            {
+                mask |= 0b00010000; // Set the fifth bit to true
+                compare2.y = delta2.y;
+                buffer.Write(delta2.y);
+            }
+            if (compare2.z != delta2.z)
+            {
+                mask |= 0b00100000; // Set the sixth bit to true
+                compare2.z = delta2.z;
+                buffer.Write(delta2.z);
+            }
+            buffer.buffer[4] = mask;
+            using var newArray = NitroManager.RentDelta(buffer.tam - 4);
+            newArray.WriteForRead(buffer.Buffer[4..]);
+            return newArray.buffer;
+        }
+        /// <summary>
+        /// Delta function for Quaternion. It compares the delta with a reference quaternion and returns a byte array.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static byte[] Delta(Quaternion delta, Quaternion delta2, ref Quaternion compare, ref Quaternion compare2)
+        {
+            using var buffer = NitroManager.Rent();
+            byte mask = 0;
+            buffer.Write(mask);
+            if (compare.x != delta.x)
+            {
+                mask |= 0b00000001; // Set the first bit to true
+                compare.x = delta.x;
+                buffer.Write(delta.x);
+            }
+            if (compare.y != delta.y)
+            {
+                mask |= 0b00000010; // Set the second bit to true
+                compare.y = delta.y;
+                buffer.Write(delta.y);
+            }
+            if (compare.z != delta.z)
+            {
+                mask |= 0b00000100; // Set the third bit to true
+                compare.z = delta.z;
+                buffer.Write(delta.z);
+            }
+            if (compare.w != delta.w)
+            {
+                mask |= 0b00001000; // Set the fourth bit to true
+                compare.w = delta.w;
+                buffer.Write(delta.w);
+            }
+            if (compare2.x != delta2.x)
+            {
+                mask |= 0b00001000; // Set the fourth bit to true
+                compare2.x = delta2.x;
+                buffer.Write(delta2.x);
+            }
+            if (compare2.y != delta2.y)
+            {
+                mask |= 0b00010000; // Set the fifth bit to true
+                compare2.y = delta2.y;
+                buffer.Write(delta2.y);
+            }
+            if (compare2.z != delta2.z)
+            {
+                mask |= 0b00100000; // Set the sixth bit to true
+                compare2.z = delta2.z;
+                buffer.Write(delta2.z);
+            }
+            if (compare2.w != delta2.w)
+            {
+                mask |= 0b01000000; // Set the seventh bit to true
+                compare2.w = delta2.w;
+                buffer.Write(delta2.w);
+            }
+            buffer.buffer[4] = mask;
+            using var newArray = NitroManager.RentDelta(buffer.tam - 4);
+            newArray.WriteForRead(buffer.Buffer[4..]);
+            return newArray.buffer;
+        }
+        /// <summary>
+        /// Reads a delta from the buffer and updates the newVector3 reference.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static byte[] Delta(Vector3 delta, Quaternion quaternion, ref Vector3 v3Compare, ref Quaternion qCompare)
+        {
+            using var buffer = NitroManager.Rent();
+            byte mask = 0;
+            buffer.Write(mask);
+            if (v3Compare.x != delta.x)
+            {
+                mask |= 0b00000001; // Set the first bit to true
+                v3Compare.x = delta.x;
+                buffer.Write(delta.x);
+            }
+            if (v3Compare.y != delta.y)
+            {
+                mask |= 0b00000010; // Set the second bit to true
+                v3Compare.y = delta.y;
+                buffer.Write(delta.y);
+            }
+            if (v3Compare.z != delta.z)
+            {
+                mask |= 0b00000100; // Set the third bit to true
+                v3Compare.z = delta.z;
+                buffer.Write(delta.z);
+            }
+            if (qCompare.x != quaternion.x)
+            {
+                mask |= 0b00001000; // Set the fourth bit to true
+                qCompare.x = quaternion.x;
+                buffer.Write(quaternion.x);
+            }
+            if (qCompare.y != quaternion.y)
+            {
+                mask |= 0b00010000; // Set the fifth bit to true
+                qCompare.y = quaternion.y;
+                buffer.Write(quaternion.y);
+            }
+            if (qCompare.z != quaternion.z)
+            {
+                mask |= 0b00100000; // Set the sixth bit to true
+                qCompare.z = quaternion.z;
+                buffer.Write(quaternion.z);
+            }
+            if (qCompare.w != quaternion.w)
+            {
+                mask |= 0b01000000; // Set the seventh bit to true
+                qCompare.w = quaternion.w;
+                buffer.Write(quaternion.w);
+            }
+            buffer.buffer[4] = mask;
+            using var newArray = NitroManager.RentDelta(buffer.tam - 4);
+            newArray.WriteForRead(buffer.Buffer[4..]);
+            return newArray.buffer;
+        }
+
+        /// <summary>
+        /// Reads a delta from the buffer and updates the newVector3 reference.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static void ReadDelta(byte[] buffer, ref Vector3 newV)
+        {
+            // Read the mask from the buffer
+            using var bufferRead = NitroManager.Rent();
+            bufferRead.WriteForRead(buffer, 4);
+            bufferRead.Length = buffer.Length + 4;
+
+            byte mask = bufferRead.Read<byte>();
+
+            if ((mask & 0b00000001) != 0)
+            {
+                newV.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000010) != 0)
+            {
+                newV.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000100) != 0)
+            {
+                newV.z = bufferRead.Read<float>();
+            }
+        }
+        public static void ReadDelta(byte[] buffer, ref Quaternion newQ)
+        {
+            // Read the mask from the buffer
+            using var bufferRead = NitroManager.Rent();
+            bufferRead.WriteForRead(buffer, 4);
+            bufferRead.Length = buffer.Length + 4;
+
+            byte mask = bufferRead.Read<byte>();
+
+            if ((mask & 0b00000001) != 0)
+            {
+                newQ.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000010) != 0)
+            {
+                newQ.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000100) != 0)
+            {
+                newQ.z = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00001000) != 0)
+            {
+                newQ.w = bufferRead.Read<float>();
+            }
+        }
+        /// <summary>
+        /// Reads a delta from the buffer and updates the newVector3 and _newV3 references.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static void ReadDelta(byte[] buffer, ref Vector3 newV, ref Vector3 _newV)
+        {
+            // Read the mask from the buffer
+            using var bufferRead = NitroManager.Rent();
+            bufferRead.WriteForRead(buffer, 4);
+            bufferRead.Length = buffer.Length + 4;
+            byte mask = bufferRead.Read<byte>();
+
+            if ((mask & 0b00000001) != 0)
+            {
+                newV.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000010) != 0)
+            {
+                newV.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000100) != 0)
+            {
+                newV.z = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00001000) != 0)
+            {
+                _newV.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00010000) != 0)
+            {
+                _newV.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00100000) != 0)
+            {
+                _newV.z = bufferRead.Read<float>();
+            }
+        }
+        /// <summary>
+        /// Reads a delta from the buffer and updates the newVector3 and _newV3 references.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static void ReadDelta(byte[] buffer, ref Quaternion newQ, ref Quaternion _newQ)
+        {
+            // Read the mask from the buffer
+            using var bufferRead = NitroManager.Rent();
+            bufferRead.WriteForRead(buffer, 4);
+            bufferRead.Length = buffer.Length + 4;
+            byte mask = bufferRead.Read<byte>();
+
+            if ((mask & 0b00000001) != 0)
+            {
+                newQ.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000010) != 0)
+            {
+                newQ.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000100) != 0)
+            {
+                newQ.z = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00001000) != 0)
+            {
+                newQ.w = bufferRead.Read<float>();
+            }
+
+            if ((mask & 0b00000001) != 0)
+            {
+                _newQ.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000010) != 0)
+            {
+                _newQ.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000100) != 0)
+            {
+                _newQ.z = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00001000) != 0)
+            {
+                _newQ.w = bufferRead.Read<float>();
+            }
+        }
+        /// <summary>
+        /// Reads a delta from the buffer and updates the newVector3 and newQuaternion references.
+        /// The first byte is a mask indicating which components have changed.
+        /// </summary>
+        public static void ReadDelta(byte[] buffer, ref Vector3 newVector3, ref Quaternion newQ)
+        {
+            // Read the mask from the buffer
+            using var bufferRead = NitroManager.Rent();
+            bufferRead.WriteForRead(buffer, 4);
+            bufferRead.Length = buffer.Length + 4;
+            byte mask = bufferRead.Read<byte>();
+
+            if ((mask & 0b00000001) != 0)
+            {
+                newVector3.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000010) != 0)
+            {
+                newVector3.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00000100) != 0)
+            {
+                newVector3.z = bufferRead.Read<float>();
+            }
+
+            if ((mask & 0b00001000) != 0)
+            {
+                newQ.x = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00010000) != 0)
+            {
+                newQ.y = bufferRead.Read<float>();
+            }
+            if ((mask & 0b00100000) != 0)
+            {
+                newQ.z = bufferRead.Read<float>();
+            }
+            if ((mask & 0b01000000) != 0)
+            {
+                newQ.w = bufferRead.Read<float>();
+            }
         }
         /// <summary>
         /// Called when the object is instantiated over the network. Can be overridden.

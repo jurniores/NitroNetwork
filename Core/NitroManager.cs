@@ -439,9 +439,9 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Sends a message to a specific peer.
         /// </summary>
-        internal static void Send(NitroConn conn, Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0, bool IsServer = true)
+        internal static void Send(NitroConn conn, Span<byte> message, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0, bool IsServer = true)
         {
-            Instance.transporter.Send(conn.Id, message, deliveryMode, channel, IsServer);
+            Instance.transporter.Send(conn.Id, message, DeliveryMode, channel, IsServer);
         }
 
         /// <summary>
@@ -526,7 +526,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Sends a message to all clients in a room or to a specific client.
         /// </summary>
-        public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target target = Target.All, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
+        public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target Target = Target.All, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
 
             if (Instance.peers.Count == 0)
@@ -534,12 +534,12 @@ namespace NitroNetwork.Core
                 Debug.LogWarning("No peers connected to send messages.");
                 return;
             }
-            if (conn != null && target == Target.Self)
+            if (conn != null && Target == Target.Self)
             {
                 Instance.BServerSent += message.Length;
                 Instance.PServerSent++;
                 if (conn.keyAes == null) return;
-                Send(conn, message, deliveryMode, channel, true);
+                Send(conn, message, DeliveryMode, channel, true);
                 return;
             }
 
@@ -552,10 +552,12 @@ namespace NitroNetwork.Core
             {
                 foreach (var (id, connRoom) in room.peersRoom)
                 {
+                    if(id == ServerConn.Id) continue;
                     if (connRoom.keyAes == null) continue;
-                    if (target == Target.ExceptSelf && conn != null)
+
+                    if (Target == Target.ExceptSelf && conn != null)
                     {
-                        if (id == conn.Id && conn.Id != ServerConn.Id) continue;
+                        if (id == conn.Id) continue;
                     }
                     if (roomValidate != null && roomValidate.peersRoom.ContainsKey(id))
                     {
@@ -563,7 +565,7 @@ namespace NitroNetwork.Core
                     }
                     Instance.PServerSent++;
                     Instance.BServerSent += message.Length;
-                    Send(connRoom, message, deliveryMode, channel, true);
+                    Send(connRoom, message, DeliveryMode, channel, true);
                 }
                 return;
             }
@@ -572,14 +574,14 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Sends a message to the server.
         /// </summary>
-        public static void SendForServer(Span<byte> message, DeliveryMode deliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
+        public static void SendForServer(Span<byte> message, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
             if (Instance.IsClient)
             {
                 Instance.BClientSent += message.Length;
                 Instance.PClientSent++;
                 if (ServerConn.keyAes == null) return;
-                Send(ServerConn, message, deliveryMode, channel, false);
+                Send(ServerConn, message, DeliveryMode, channel, false);
             }
             else
             {
@@ -818,7 +820,13 @@ namespace NitroNetwork.Core
         {
             return bufferPool.Rent();
         }
-
+        /// <summary>
+        /// Rents a NitroBuffer from the pool for delta operations.
+        /// </summary>
+        internal static NitroBuffer RentDelta(int key)
+        {
+            return bufferPool.RentDelta(key);
+        }
         /// <summary>
         /// Gets the current public RSA key.
         /// </summary>

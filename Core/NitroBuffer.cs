@@ -70,7 +70,7 @@ namespace NitroNetwork.Core
         /// If the array is null or empty, writes two zero bytes.
         /// </summary>
         /// <param name="bytes">The byte array to write.</param>
-        
+
         private void WriteBytes(Span<byte> bytes)
         {
             if (bytes == null || bytes.Length == 0)
@@ -121,38 +121,46 @@ namespace NitroNetwork.Core
         /// <param name="p1">The data to write.</param>
         public unsafe void Write<P>(P p1)
         {
-            if (typeof(P) == typeof(string))
+            try
             {
-                WriteString(Convert.ChangeType(p1, typeof(string)) as string);
-                return;
+                if (typeof(P) == typeof(string))
+                {
+                    WriteString(Convert.ChangeType(p1, typeof(string)) as string);
+                    return;
+                }
+                if (typeof(P) == typeof(byte[]))
+                {
+                    WriteBytes(p1 as byte[]);
+                    return;
+                }
+                if (!typeof(P).IsValueType || !typeof(P).IsLayoutSequential && !typeof(P).IsExplicitLayout)
+                {
+                    WriteClass(p1);
+                    return;
+                }
+
+                int size_t = Marshal.SizeOf<P>();
+
+                // Check if there's enough space in the buffer
+                if (3 + size_t > buffer.Length)
+                    Array.Resize(ref buffer, Math.Max(buffer.Length * 2, 3 + size_t));
+
+                Span<byte> bSpan = buffer.AsSpan(tam);
+
+                fixed (byte* byteArrayPtr = bSpan)
+                    Marshal.StructureToPtr(p1, (IntPtr)byteArrayPtr, true);
+
+                tam += size_t;
             }
-            if (typeof(P) == typeof(byte[]))
+            catch (Exception ex)
             {
-                WriteBytes(p1 as byte[]);
-                return;
-            }
-            if (!typeof(P).IsValueType || !typeof(P).IsLayoutSequential && !typeof(P).IsExplicitLayout)
-            {
-                WriteClass(p1);
-                return;
+                NitroLogs.LogError($"Error writing {typeof(P).Name}: {ex.Message}");
             }
 
-            int size_t = Marshal.SizeOf<P>();
-
-            // Check if there's enough space in the buffer
-            if (3 + size_t > buffer.Length)
-                Array.Resize(ref buffer, Math.Max(buffer.Length * 2, 3 + size_t));
-
-            Span<byte> bSpan = buffer.AsSpan(tam);
-
-            fixed (byte* byteArrayPtr = bSpan)
-                Marshal.StructureToPtr(p1, (IntPtr)byteArrayPtr, true);
-
-            tam += size_t;
         }
-        public void WriteForRead(ReadOnlySpan<byte> span)
+        public void WriteForRead(ReadOnlySpan<byte> span, int position = 0)
         {
-            span.CopyTo(buffer.AsSpan());
+            span.CopyTo(buffer.AsSpan(position));
         }
         /// <summary>
         /// Sets the command ID and identity ID in the buffer header.
@@ -177,40 +185,41 @@ namespace NitroNetwork.Core
         /// <exception cref="FormatException">Thrown when the data format is invalid.</exception>
         public unsafe T Read<T>()
         {
-            if (typeof(T) == typeof(byte[]))
-            {
-                object buffer = ReadBuffer();
-                return (T)buffer;
-            }
-            if (typeof(T) == typeof(string))
-            {
-                object txt = ReadString();
-                return (T)txt;
-            }
-            if (typeof(T) == typeof(byte[]))
-            {
-                object bytes = ReadBytes();
-                return (T)bytes;
-            }
-
-            if (!typeof(T).IsValueType || !typeof(T).IsLayoutSequential && !typeof(T).IsExplicitLayout)
-            {
-                return ReadClass<T>();
-            }
-
-            int size = Marshal.SizeOf<T>();
-
-            // Check if there's enough data
-            if (tam + size > buffer.Length)
-            {
-                string errorMsg = $"Error reading {typeof(T).Name}: current position ({tam}) + size ({size}) exceeds buffer length ({buffer.Length})";
-                NitroLogs.LogError(errorMsg);
-                throw new InvalidOperationException(errorMsg);
-            }
-
-            T result;
             try
             {
+                if (typeof(T) == typeof(byte[]))
+                {
+                    object buffer = ReadBuffer();
+                    return (T)buffer;
+                }
+                if (typeof(T) == typeof(string))
+                {
+                    object txt = ReadString();
+                    return (T)txt;
+                }
+                if (typeof(T) == typeof(byte[]))
+                {
+                    object bytes = ReadBytes();
+                    return (T)bytes;
+                }
+
+                if (!typeof(T).IsValueType || !typeof(T).IsLayoutSequential && !typeof(T).IsExplicitLayout)
+                {
+                    return ReadClass<T>();
+                }
+
+                int size = Marshal.SizeOf<T>();
+
+                // Check if there's enough data
+                if (tam + size > buffer.Length)
+                {
+                    string errorMsg = $"Error reading {typeof(T).Name}: current position ({tam}) + size ({size}) exceeds buffer length ({buffer.Length})";
+                    NitroLogs.LogError(errorMsg);
+                    throw new InvalidOperationException(errorMsg);
+                }
+
+                T result;
+
                 Span<byte> bSpan = buffer.AsSpan(tam);
                 fixed (byte* ptr = bSpan)
                 {
@@ -228,7 +237,7 @@ namespace NitroNetwork.Core
 
 
                 NitroLogs.LogError("If you are sending a struct, only send with primitive types, or use classes with MemoryPack");
-                throw;
+                return default;
             }
         }
         /// <summary>

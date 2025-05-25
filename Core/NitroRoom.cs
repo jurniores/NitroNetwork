@@ -85,7 +85,7 @@ namespace NitroNetwork.Core
                         identities.Remove(identity.Key);
                         continue;
                     }
-                    identity.Value.SendDestroyForClient(conn, target: Target.Self);
+                    identity.Value.SendDestroyForClient(conn, Target: Target.Self);
                 }
                 peersRoom.Remove(conn.Id);
                 conn.RemoveRoom(this);
@@ -132,11 +132,11 @@ namespace NitroNetwork.Core
             {
                 if (identity.room != null)
                 {
-                    identity.SendDestroyForClient(identity.conn, newRoom: this, target: Target.ExceptSelf);
+                    identity.SendDestroyForClient(identity.conn, newRoom: this, Target: Target.ExceptSelf);
                     identity.room.identities.Remove(identity.Id);
                 }
                 identity.SetRoom(this);
-                identity.SendSpawnForClient(identity.conn, newRoom: this, target: Target.ExceptSelf);
+                identity.SendSpawnForClient(identity.conn, newRoom: this, Target: Target.ExceptSelf);
                 identities.Add(identity.Id, identity);
                 NitroLogs.Log($"Identity {identity.Id} add in room {Name}");
                 return true;
