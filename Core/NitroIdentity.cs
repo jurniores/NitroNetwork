@@ -21,7 +21,7 @@ namespace NitroNetwork.Core
         // Dictionaries for storing server and client RPCs
         public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
         // Array of child behaviors associated with this identity
-        private NitroBehaviour[] behaviours;
+        private Dictionary<string, NitroBehaviour> behaviours = new();
         // Indicates if the identity is static (does not change during execution)
         [HideInInspector]
         public bool IsStatic = false;
@@ -56,9 +56,12 @@ namespace NitroNetwork.Core
             {
                 if (IsServer) DisableAllVisualComponents();
             }
-            behaviours = GetComponentsInChildren<NitroBehaviour>(true);
+            foreach (var nb in GetComponentsInChildren<NitroBehaviour>(true))
+            {
+                behaviours[nb.name] = nb;
+            }
 
-            foreach (var nb in behaviours)
+            foreach (var nb in behaviours.Values)
             {
                 if (IsServer || IsStatic) nb.__RegisterMyRpcServer(RpcServer);
                 if (IsClient || IsStatic) nb.__RegisterMyRpcClient(RpcClient);
@@ -154,7 +157,7 @@ namespace NitroNetwork.Core
         /// </summary>
         internal void OnInstantiated(NitroBuffer buffer)
         {
-            foreach (var nb in behaviours)
+            foreach (var nb in behaviours.Values)
             {
                 nb.OnInstantiated();
             }
