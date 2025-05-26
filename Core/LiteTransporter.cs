@@ -5,7 +5,6 @@ using UnityEngine;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using System.Collections;
-using LiteNetLib.Layers;
 
 namespace NitroNetwork.Core
 {
@@ -281,37 +280,6 @@ namespace NitroNetwork.Core
                      $"[LiteTransporter] Unsupported delivery mode '{DeliveryMode}'"),
             };
         }
-        public class LiteSecurityLayer : PacketLayerBase
-        {
-            private const int ChecksumSize = 32; // 32 bytes for SHA256 hash
-            private readonly byte[] hmacKey = new byte[ChecksumSize]
-            {
-                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-                    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F
-            };
-
-            public LiteSecurityLayer() : base(ChecksumSize) { }
-
-            public override void ProcessInboundPacket(ref IPEndPoint endPoint, ref byte[] data, ref int length)
-            {
-                // Get the checksum from the end of the packet
-                int offset = length - ChecksumSize;
-                ReadOnlySpan<byte> checksum = data.AsSpan(offset, ChecksumSize);
-
-                // Calculate the checksum for the data without the checksum itself
-               
-
-                length -= ChecksumSize;
-            }
-
-            public override void ProcessOutBoundPacket(ref IPEndPoint endPoint, ref byte[] data, ref int offset, ref int length)
-            {
-               
-            }
-        }
-
     }
 
 }
