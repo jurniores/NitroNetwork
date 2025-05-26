@@ -11,6 +11,14 @@ namespace NitroNetwork.Core
     public class NitroBehaviour : MonoBehaviour
     {
         /// <summary>
+        /// The type of NitroBehaviour, indicating whether it is a server or client behaviour.
+        /// /// </summary>
+        public const NitroType Server = NitroType.Server;
+        /// <summary>
+        /// The type of NitroBehaviour, indicating whether it is a client behaviour.
+        /// /// </summary>
+        public const NitroType Client = NitroType.Client;
+        /// <summary>
         /// The network identity associated with this behaviour.
         /// </summary>
         protected NitroIdentity Identity;

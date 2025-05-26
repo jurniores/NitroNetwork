@@ -106,7 +106,7 @@ public partial class NitroTransform : NitroBehaviour
     /// Updates the Target position but does not adjust the player's position directly.
     /// </summary>
     /// <param name="move">The position where the player stopped.</param>
-    [NitroRPC(RPC.Server)]
+    [NitroRPC(NitroType.Server)]
     void StopServeR(Vector3 move)
     {
         moviment = move; // Update the Target position
@@ -119,7 +119,7 @@ public partial class NitroTransform : NitroBehaviour
     /// Starts the movement towards the new position.
     /// </summary>
     /// <param name="move">The new position to move towards.</param>
-    [NitroRPC(RPC.Server, DeliveryMode = DeliveryMode.Sequenced)]
+    [NitroRPC(NitroType.Server, DeliveryMode = DeliveryMode.Sequenced)]
     void ReceiveMove(byte[] move)
     {
         ReadDelta(move, ref moviment, ref rotation);
@@ -132,7 +132,7 @@ public partial class NitroTransform : NitroBehaviour
     /// Updates the Target position but does not adjust the player's position directly.
     /// </summary>
     /// <param name="move">The position where the player stopped.</param>
-    [NitroRPC(RPC.Client, Target = Target.ExceptSelf)]
+    [NitroRPC(NitroType.Client, Target = Target.ExceptSelf)]
     void ReceiveMoveStop(Vector3 move)
     {
         moviment = move; // Update the Target position
@@ -144,7 +144,7 @@ public partial class NitroTransform : NitroBehaviour
     /// Starts the movement towards the new position.
     /// </summary>
     /// <param name="move">The new position to move towards.</param>
-    [NitroRPC(RPC.Client, Target = Target.ExceptSelf, DeliveryMode = DeliveryMode.Sequenced)]
+    [NitroRPC(NitroType.Client, Target = Target.ExceptSelf, DeliveryMode = DeliveryMode.Sequenced)]
     void ReceiveMoveInEnemy(byte[] move)
     {
         ReadDelta(move, ref moviment, ref rotation);
