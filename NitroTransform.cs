@@ -1,5 +1,6 @@
 using System;
 using NitroNetwork.Core;
+using RPC = NitroNetwork.Core.RPC;
 using UnityEngine;
 
 public partial class NitroTransform : NitroBehaviour
