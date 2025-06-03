@@ -66,7 +66,7 @@ namespace NitroNetwork.Core
                 {
                     IPv6Enabled = iPv6Enabled,
                     BroadcastReceiveEnabled = true,
-                    UpdateTime = 15,
+                    UpdateTime = 1,
                     DisconnectTimeout = disconnectedTimeoutSeconds * 1000,
                     ChannelsCount = (byte)(channels + 1),
                     SimulateLatency = SimulateLatency,
@@ -74,6 +74,7 @@ namespace NitroNetwork.Core
                     SimulationMaxLatency = maxLatence,
                     SimulatePacketLoss = SimulatePacketLoss,
                     SimulationPacketLossChance = SimulationPacketLossChance
+                    
                 };
                 _netServer.Start(port);
 
@@ -102,7 +103,7 @@ namespace NitroNetwork.Core
                 IPv6Enabled = iPv6Enabled,
                 SimulationPacketLossChance = SimulationPacketLossChance,
                 UnconnectedMessagesEnabled = true,
-                UpdateTime = 15
+                UpdateTime = 1
             };
             _netClient.Start();
             _netClient.PingInterval = 1000; // Set ping interval to 1 second
