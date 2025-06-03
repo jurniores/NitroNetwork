@@ -189,7 +189,6 @@ namespace NitroNetwork.Core
         {
             Instance.transporter.ServerConnect("127.0.0.1", port);
             Instance.firstRoom = CreateRoom(Guid.NewGuid().ToString(), false);
-            Instance.firstRoom.JoinRoom(ServerConn);
             Instance.IsServer = true;
         }
 

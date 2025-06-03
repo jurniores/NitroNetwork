@@ -175,7 +175,7 @@ namespace NitroNetwork.Core
             var newRoom = room ?? NitroManager.GetFirstRoom(); // Gets the room if not specified
 
             // Checks if the connection is in the room
-            if (!conn.rooms.ContainsKey(newRoom.Name))
+            if (conn.Id != NitroManager.ServerConn.Id &&!conn.rooms.ContainsKey(newRoom.Name))
             {
                 Debug.LogError($"Conn {conn.Id} is not in the room {room.Name}");
                 return null;

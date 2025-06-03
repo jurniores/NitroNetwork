@@ -123,7 +123,7 @@ namespace NitroNetwork.Core
         /// <returns>True if the identity was added, false otherwise.</returns>
         public bool AddIdentity(NitroIdentity identity)
         {
-            if (!peersRoom.ContainsKey(identity.conn.Id))
+            if (identity.conn.Id != NitroManager.ServerConn.Id && !peersRoom.ContainsKey(identity.conn.Id))
             {
                 NitroLogs.LogError($"Peer {identity.conn.Id} not in room {Name}");
                 return false;
