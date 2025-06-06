@@ -21,7 +21,7 @@ namespace NitroNetwork.Core
         // Dictionaries for storing server and client RPCs
         public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
         // Array of child behaviors associated with this identity
-        private Dictionary<string, NitroBehaviour> behaviours = new();
+        public Dictionary<string, NitroBehaviour> behaviours = new();
         // Indicates if the identity is static (does not change during execution)
         [HideInInspector]
         public bool IsStatic = false;
@@ -58,13 +58,13 @@ namespace NitroNetwork.Core
             }
             foreach (var nb in GetComponentsInChildren<NitroBehaviour>(true))
             {
-                behaviours[nb.name] = nb;
+                behaviours[nb.GetType().Name] = nb;
             }
 
             foreach (var nb in behaviours.Values)
             {
-                if (IsServer || IsStatic) nb.__RegisterMyRpcServer(RpcServer);
-                if (IsClient || IsStatic) nb.__RegisterMyRpcClient(RpcClient);
+                nb.__RegisterMyRpcServer(RpcServer);
+                nb.__RegisterMyRpcClient(RpcClient);
             }
             // If the identity is static, register it with the NitroManager
             if (IsStatic || IsClient)
@@ -124,7 +124,7 @@ namespace NitroNetwork.Core
         /// </summary>
         private void OnEnable()
         {
-            if (IsServer) RpcServer.TryAdd((int)NitroCommands.SpawnRPC, OnInstantiated);
+            if (IsServer || IsStatic) RpcServer.TryAdd((int)NitroCommands.SpawnRPC, OnInstantiated);
             if (IsClient)
             {
                 using var buffer = NitroManager.Rent();
@@ -175,7 +175,7 @@ namespace NitroNetwork.Core
             var newRoom = room ?? NitroManager.GetFirstRoom(); // Gets the room if not specified
 
             // Checks if the connection is in the room
-            if (conn.Id != NitroManager.ServerConn.Id &&!conn.rooms.ContainsKey(newRoom.Name))
+            if (conn.Id != NitroManager.ServerConn.Id && !conn.rooms.ContainsKey(newRoom.Name))
             {
                 Debug.LogError($"Conn {conn.Id} is not in the room {room.Name}");
                 return null;

@@ -71,7 +71,7 @@ namespace NitroNetwork.Core
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn; // Connection event callbacks
         public static Action<int> OnPingClient; // Ping event callback
         public static Action<NitroBandWidth> OnBandWidth; // Bandwidth event callbacks
-        public static Action OnClientConnected; // Client connection event callback
+        public static Action OnClientConnected, OnServerConnected; // Client connection event callback
         /// <summary>
         /// Unity Awake lifecycle method.
         /// Initializes the NitroManager, registers RPCs, sets up the transporter, and generates encryption keys.
@@ -80,6 +80,7 @@ namespace NitroNetwork.Core
         {
             OnConnectConn = null;
             OnClientConnected = null;
+            OnServerConnected = null;
             OnDisconnectConn = null;
             OnBandWidth = null;
             OnPingClient = null;
@@ -121,8 +122,6 @@ namespace NitroNetwork.Core
             {
                 ConnectClientLan(port, () =>
                 {
-                    IsServer = true;
-                    IsClient = true;
                     ValidateConnect();
                 });
             }
@@ -372,7 +371,8 @@ namespace NitroNetwork.Core
                     else
                     {
                         Debug.Log($"Failed to remove peer {connCallManager.Id}");
-                    };
+                    }
+                    ;
                 }
             }
             else if (IsClient)
@@ -450,8 +450,14 @@ namespace NitroNetwork.Core
             {
                 Debug.Log($"Server connected in {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
                 IsServer = true;
+                
+                foreach (var identity in identitiesServer.Values)
+                {
+                    identity.SetConfig();
+                }
                 ServerConn = conn;
                 ServerConn.keyAes = NitroCriptografyAES.GenerateKeys();
+                OnServerConnected?.Invoke();
                 StartCoroutine(IESpeedHackValidate());
             }
         }
@@ -477,6 +483,7 @@ namespace NitroNetwork.Core
                 SpeedHackValidate(conn);
                 if (RpcsServer.TryGetValue((identityId, id), out var action))
                 {
+
                     action?.Invoke(buffer, conn);
                     return;
                 }
@@ -537,7 +544,7 @@ namespace NitroNetwork.Core
             {
                 foreach (var (id, connRoom) in room.peersRoom)
                 {
-                    if(id == ServerConn.Id) continue;
+                    if (id == ServerConn.Id) continue;
                     if (connRoom.keyAes == null) continue;
 
                     if (Target == Target.ExceptSelf && conn != null)
@@ -721,7 +728,6 @@ namespace NitroNetwork.Core
             bufferAes.SetInfo((byte)NitroCommands.SendAES, (int)NitroCommands.GetConnection);
             bufferAes.Write(keyAes);
             bufferAes.EncriptRSA(GetPublicKey());
-            IsClient = true;
             Send(conn, bufferAes.Buffer, DeliveryMode.ReliableOrdered, 0, false);
         }
 
@@ -785,7 +791,7 @@ namespace NitroNetwork.Core
             if (!buffer.DecryptAes(ClientConn.keyAes)) return;
             var serverAes = buffer.Read<byte[]>();
             ServerConn.keyAes = serverAes;
-
+            IsClient = true;
             foreach (var identity in identitiesClient)
             {
                 identity.Value.SetConfig();
