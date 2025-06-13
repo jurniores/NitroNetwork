@@ -35,7 +35,7 @@ namespace NitroNetwork.Core
         // Indicates if the object should be hidden in the hierarchy
         [Header("Hide from hierarchy")]
         [SerializeField]
-        private bool Hide = true;
+        private bool Hide = false;
         // Name of the room associated with this identity
         protected string roomName;
         // Name of the prefab associated with this identity
