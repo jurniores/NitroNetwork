@@ -60,7 +60,7 @@ namespace NitroNetwork.Core
         public bool Client = true; // Should this instance act as client
         private int BServerSent = 0, BClientSent = 0, PServerSent = 0, PClientSent = 0, BServerReceived = 0, BClientReceived = 0, PServerReceived = 0, PClientReceived = 0; // Bandwidth usage for server/client
         [Range(0, 1000)]
-        public uint msgForDisconnectPeer = 60;
+        public uint msgForDisconnectPeer = 0;
         [HideIf(nameof(usePresetRsaKeys), false)]
         public string publicKey, privateKey; // RSA keys for encryption
         [Header("Criptography")]

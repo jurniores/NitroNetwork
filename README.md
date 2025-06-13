@@ -283,7 +283,6 @@ Below are the key properties available in the `NitroIdentity` component:
 | `IsMine`       | `bool`          | True if the local connection owns this identity                 |
 | `Room`         | `NitroRoom`     | The room this identity belongs to                               |
 | `callConn`     | `NitroConn`     | The connection that initiated the last RPC call                 |
-| `lastClientId` | `int`           | ID of the last client to interact with this identity            |
 | `Hide`         | `bool`          | When set in inspector, hides the object from network spawning   |
 | `SpawnInParent`| `bool`          | When enabled, spawns the object as a child of a specified parent|
 
@@ -340,10 +339,13 @@ using UnityEngine;
 [RequireComponent(typeof(NitroStatic))]
 public partial class ConnectPeers : NitroBehaviour
 {
-    void Start()
+    void Update()
     {
-        // Trigger the server-side spawn when this component initializes
-        CallSpawnServer();
+        // Press the spacebar on the keyboard
+        if (IsClient && Input.GetKeyDown(KeyCode.Space))
+        {
+            CallSpawnServer();
+        }
     }
 
     /// <summary>
@@ -392,7 +394,6 @@ You can dynamically assign a network identity to a room later using the `NitroRo
 This is useful for:
 - Moving players between lobbies and matches.
 - Dynamically organizing instances by region, game mode, etc.
-- Deferring room logic until after initialization.
 
 ---
 
@@ -436,7 +437,7 @@ NitroRoom nitroRoom = NitroManager.CreateRoom("RoomTest", false);
 
 When you assign a `NitroIdentity` to a room using `AddIdentity(identity)`:
 
-- ✅ It will be **spawned** (i.e., become visible and synchronized) for all clients that are currently in the **Target room**.
+- ✅ It will be **spawned** (i.e., become visible and synchronized) for all clients that are currently in the **room**.
 - ❌ It will be **destroyed** (unspawned) for all clients that were in the **previous room**.
 - 🌀 If the identity was not part of any room before, it is automatically assigned to the **default universal room**.
 
