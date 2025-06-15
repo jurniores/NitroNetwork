@@ -1,5 +1,8 @@
 # 🔥 NitroNetwork - Unity Networking Framework
 
+> ⚠️ **Requires Unity 2022.3 or newer**  
+> NitroNetwork depends on features available only in recent versions of Unity.
+
 **NitroNetwork** is a lightweight and fast networking solution for Unity, designed to simplify multiplayer development while offering flexibility and control for both client and server behaviors.
 
 This repository contains an example implementation of a basic connection flow between client and server using `NitroBehaviour`, `NitroStatic`, and `NitroRPC`.
