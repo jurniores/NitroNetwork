@@ -332,7 +332,6 @@ namespace NitroNetwork.Core
 
                 peers.TryAdd(conn.Id, conn);
                 SendInfoInitialForClient();
-                Debug.Log($"Peer {conn.Id} connected to server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
             }
             else
             {
@@ -766,13 +765,15 @@ namespace NitroNetwork.Core
             }
 
             conn.keyAes = keyAes;
-            firstRoom.JoinRoom(conn);
             var bufferSend = Rent();
             bufferSend.SetInfo((byte)NitroCommands.Connected, (int)NitroCommands.GetConnection);
             bufferSend.Write(ServerConn.keyAes);
             bufferSend.EncriptAes(conn.keyAes);
             Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
+            firstRoom.JoinRoom(conn);
             OnConnectConn?.Invoke(conn);
+            
+            Debug.Log($"Peer {conn.Id} connected to server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
         }
         internal static int GetMyPing(NitroConn conn)
         {
