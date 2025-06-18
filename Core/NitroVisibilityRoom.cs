@@ -43,16 +43,7 @@ public partial class NitroVisibilityRoom : NitroBehaviour
             if (room != null)
             {
                 room?.identities.Remove(Identity.Id);
-
-                foreach (var identity in room.identities.Values)
-                {
-                    if (identity.conn == Identity.conn)
-                    {
-                        print(identity.Id + " is the same as " + Identity.Id);
-                        return;
-                    }
-                }
-                room.LeaveRoom(Identity.conn);
+                Identity.conn.AddIdentityVisibility(room, -1);
             }
         }
     }

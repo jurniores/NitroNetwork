@@ -484,6 +484,8 @@ The `NitroRoom` API provides fine-grained control over connection membership, id
 
 Below is a complete example with line-by-line explanation:
 
+When using AddIdentity, it automatically leaves the previous room if it was in one. If no other object exists in the same room as the connection, the connection will be automatically removed.
+
 ```csharp
 NitroRoom nitroRoom = NitroManager.CreateRoom("RoomTest");
 

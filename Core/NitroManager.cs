@@ -435,7 +435,6 @@ namespace NitroNetwork.Core
             if (room.autoDestroy && room.peersRoom.Count == 0 && Instance.rooms.Remove(room.Name))
             {
                 room.DestroyAllIdentities();
-                Debug.Log($"Room {room.Name} removed from manager.");
                 return true;
             }
             return false;
@@ -457,7 +456,6 @@ namespace NitroNetwork.Core
             if (room.Id != Instance.firstRoom.Id && room != null && Instance.rooms.Remove(room.Name))
             {
                 room.DestroyAllIdentities();
-                Debug.Log($"Room {room.Name} removed from manager.");
             }
         }
 

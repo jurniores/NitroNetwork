@@ -45,6 +45,11 @@ namespace NitroNetwork.Core
         public Dictionary<int, NitroIdentity> identities = new();
 
         /// <summary>
+        /// Identities associated to this connection in the room.
+        /// </summary>
+        public Dictionary<string, int> identitiesVisibility = new();
+
+        /// <summary>
         /// Dados customizados associados a esta conexão.
         /// </summary>
         public Dictionary<object, object> customData = new();
@@ -129,6 +134,23 @@ namespace NitroNetwork.Core
             }
             identities.Clear();
             customData.Clear();
+        }
+    
+        internal void AddIdentityVisibility(NitroRoom room, int i)
+        {
+            if (room == NitroManager.GetFirstRoom()) return;
+            if (!identitiesVisibility.ContainsKey(room.Name))
+            {
+                identitiesVisibility[room.Name] = 0;
+            }
+           
+            identitiesVisibility[room.Name] += i;
+
+            if (identitiesVisibility[room.Name] <= 0)
+            {
+                identitiesVisibility.Remove(room.Name);
+                room.LeaveRoom(this);
+            }
         }
     }
 }

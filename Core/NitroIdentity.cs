@@ -170,8 +170,9 @@ namespace NitroNetwork.Core
         /// <param name="conn">The connection associated with the new identity.</param>
         /// <param name="room">The room where the identity will be spawned.</param>
         /// <returns>The newly spawned NitroIdentity.</returns>
-        public NitroIdentity Spawn(NitroConn conn, NitroRoom room = null)
+        public NitroIdentity Spawn(NitroConn conn = null, NitroRoom room = null)
         {
+            conn ??= NitroManager.ServerConn; // Gets the connection if not specified
             var newRoom = room ?? NitroManager.GetFirstRoom(); // Gets the room if not specified
 
             // Checks if the connection is in the room

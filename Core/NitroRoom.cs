@@ -128,6 +128,7 @@ namespace NitroNetwork.Core
             }
             if (!identities.ContainsKey(identity.Id))
             {
+                identity.conn.AddIdentityVisibility(identity.room, -1);
                 if (identity.room != null)
                 {
                     identity.SendDestroyForClient(identity.conn, newRoom: this, Target: Target.ExceptSelf);
@@ -135,6 +136,7 @@ namespace NitroNetwork.Core
                 }
                 identity.SetRoom(this);
                 identity.SendSpawnForClient(identity.conn, newRoom: this, Target: Target.ExceptSelf);
+                identity.conn.AddIdentityVisibility(this, 1);
                 identities.Add(identity.Id, identity);
                 return true;
             }
