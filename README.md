@@ -503,6 +503,25 @@ nitroRoom.autoDestroy = false;
 // and destroys all identities (from that room) for that connection
 nitroRoom.LeaveRoom(Identity.callConn);
 
+## 🔗 NitroVisibilityRoom: Managing Peer Connections
+### 🌐 Simplified Room Management with `NitroVisibilityRoom`
+
+If you don't want to manually manage room creation in your code, the `NitroVisibilityRoom` component can handle it for you. Simply attach it to your networked object, and it will automatically create or join rooms as needed.
+
+#### How It Works:
+- If you have 10 networked objects with 10 different `RoomId` values, `NitroVisibilityRoom` will create or join those 10 rooms for you.
+- Your connection will automatically listen to and see all objects in those rooms.
+- If you destroy a network identity and no other objects remain in the same room, your connection will automatically leave that room.
+- All rooms created this way are set to `autoDestroy = true`, meaning they will be cleaned up when no longer needed.
+
+#### Usage:
+1. Create a GameObject.
+2. Attach the `NitroIdentity` and `NitroVisibilityRoom` components to it.
+3. Assign a `RoomId` to the prefab. You can also change the `RoomId` at runtime, and the object will automatically switch to the new room.
+
+This approach simplifies room management while ensuring efficient cleanup of unused rooms.
+
+---
 
 ```
 ## 🔗 NitroConn: Managing Peer Connections
@@ -586,6 +605,12 @@ NitroManager.GetPrefab(1);
 
 // Fetches a prefab by name (string)
 NitroManager.GetPrefab("Player");
+
+// Retrieves a Dictionary of all active rooms in the network.
+NitroManager.GetRooms(); 
+
+// Fetches a specific room by its ID.
+NitroManager.GetRoom("Room1"); 
 
 // Returns the current ping (latency in milliseconds) for the connected client.
 // Useful for displaying network quality or debugging connection issues.

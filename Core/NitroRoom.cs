@@ -89,8 +89,6 @@ namespace NitroNetwork.Core
                 }
                 peersRoom.Remove(conn.Id);
                 conn.RemoveRoom(this);
-                NitroLogs.Log($"Peer {conn.Id} removed from room {Name}");
-
                 NitroManager.RemoveRoomAuto(this);
                 return true;
             }
@@ -138,7 +136,6 @@ namespace NitroNetwork.Core
                 identity.SetRoom(this);
                 identity.SendSpawnForClient(identity.conn, newRoom: this, Target: Target.ExceptSelf);
                 identities.Add(identity.Id, identity);
-                NitroLogs.Log($"Identity {identity.Id} add in room {Name}");
                 return true;
             }
             return false;

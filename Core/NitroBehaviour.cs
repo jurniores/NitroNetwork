@@ -23,6 +23,14 @@ namespace NitroNetwork.Core
         /// </summary>
         protected NitroIdentity Identity;
         /// <summary>
+        /// Gets the NitroIdentity associated with this behaviour.
+        /// /// </summary>
+        protected NitroConn Conn => Identity != null ? Identity.conn : null;
+        /// <summary>
+        /// Gets the NitroConn used for calling RPCs on this behaviour.
+        /// /// </summary>
+        protected NitroConn CallConn => Identity != null ? Identity.callConn : null;
+        /// <summary>
         /// Indicates if this object is static in the network context.
         /// </summary>
         protected bool IsStatic = false;

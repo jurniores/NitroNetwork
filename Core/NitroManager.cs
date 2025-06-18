@@ -405,6 +405,27 @@ namespace NitroNetwork.Core
         {
             return Instance.rooms.ContainsKey(room.Name);
         }
+        /// <summary>
+        /// Checks if a room with the specified ID exists in the manager.
+        /// </summary>
+        public static bool RoomExists(string roomId)
+        {
+            return Instance.rooms.ContainsKey(roomId);
+        }
+        /// <summary>
+        /// Gets the list of all rooms managed by the NitroManager.
+        /// </summary>
+        public static Dictionary<string, NitroRoom> GetRooms()
+        {
+            return Instance.rooms;
+        }
+        /// <summary>
+        /// Retrieves a room by its ID.
+        /// </summary>
+         public static NitroRoom GetRoom(string roomId)
+        {
+            return Instance.rooms.TryGetValue(roomId, out var room) ? room : null;
+        }
 
         /// <summary>
         /// Removes a room automatically if it is empty and marked for auto-destruction.
