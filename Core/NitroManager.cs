@@ -717,6 +717,7 @@ namespace NitroNetwork.Core
                 identity.transform.position = pos;
                 identity.transform.rotation = Quaternion.Euler(rot);
                 identity.gameObject.SetActive(true);
+                prefab.gameObject.SetActive(true);
             }
             else
             {
