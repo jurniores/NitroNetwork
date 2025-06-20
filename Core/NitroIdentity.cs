@@ -194,6 +194,7 @@ namespace NitroNetwork.Core
             newIdentity.SendSpawnForClient(conn, Target.All, newRoom: newRoom);
             newRoom.SetIdentity(newIdentity);
             newIdentity.gameObject.SetActive(true);
+            gameObject.SetActive(true);
             return newIdentity;
         }
 
