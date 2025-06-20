@@ -47,12 +47,7 @@ namespace NitroNetwork.Core
         /// </summary>
         void Awake()
         {
-
-            // Registers RPCs for child behaviors
-            var isServer = false;
-            var isClient = false;
-            NitroManager.IsServerAndClient(ref isServer, ref isClient, this);
-            if (isServer && isClient && Hide)
+            if (NitroManager.Instance.Client && NitroManager.Instance.Server && Hide)
             {
                 if (IsServer) DisableAllVisualComponents();
             }
@@ -174,7 +169,7 @@ namespace NitroNetwork.Core
         {
             conn ??= NitroManager.ServerConn; // Gets the connection if not specified
             var newRoom = room ?? NitroManager.GetFirstRoom(); // Gets the room if not specified
-
+            
             // Checks if the connection is in the room
             if (conn.Id != NitroManager.ServerConn.Id && !conn.rooms.ContainsKey(newRoom.Name))
             {

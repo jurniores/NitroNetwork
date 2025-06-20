@@ -44,7 +44,7 @@ namespace NitroNetwork.Core
         public Dictionary<int, NitroIdentity> identitiesClient = new(); // Client-side identities
         private NitroRoom firstRoom = new NitroRoom(); // The initial room created on startup
         private NitroConn connCallManager = new(); // Helper connection for internal use
-        private static NitroManager Instance; // Singleton instance
+        internal static NitroManager Instance; // Singleton instance
         [Header("Config Connection")]
         public bool ConnectInLan = false; // LAN mode flag
         [SerializeField, HideIf(nameof(ConnectInLan))]
@@ -187,7 +187,6 @@ namespace NitroNetwork.Core
         public static void ConnectServer(int port)
         {
             Instance.transporter.ServerConnect("127.0.0.1", port);
-            Instance.firstRoom = CreateRoom(Guid.NewGuid().ToString(), false);
             Instance.IsServer = true;
         }
 
@@ -434,6 +433,7 @@ namespace NitroNetwork.Core
         {
             if (room.autoDestroy && room.peersRoom.Count == 0 && Instance.rooms.Remove(room.Name))
             {
+                Debug.Log($"Room {room.Name} removed automatically.");
                 room.DestroyAllIdentities();
                 return true;
             }
@@ -445,6 +445,7 @@ namespace NitroNetwork.Core
         /// </summary>
         internal static void Send(NitroConn conn, Span<byte> message, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0, bool IsServer = true)
         {
+            if (conn.Id == ServerConn.Id) return;
             Instance.transporter.Send(conn.Id, message, DeliveryMode, channel, IsServer);
         }
 
@@ -468,13 +469,14 @@ namespace NitroNetwork.Core
             {
                 Debug.Log($"Server connected in {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
                 IsServer = true;
-                
+                firstRoom = CreateRoom(Guid.NewGuid().ToString(), false);
                 foreach (var identity in identitiesServer.Values)
                 {
                     identity.SetConfig();
                 }
                 ServerConn = conn;
                 ServerConn.keyAes = NitroCriptografyAES.GenerateKeys();
+                firstRoom.JoinRoom(ServerConn);
                 OnServerConnected?.Invoke();
                 StartCoroutine(IESpeedHackValidate());
             }
