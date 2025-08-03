@@ -556,8 +556,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   btnStartServer: {fileID: 801632447039499698}
   btnStartClient: {fileID: 6367301977890728917}
-  txtServer: {fileID: 0}
-  txtClient: {fileID: 0}
+  inputAddress: {fileID: 752670139767023822}
+  inputPort: {fileID: 7551933344969094191}
 --- !u!1 &2795670372046504856
 GameObject:
   m_ObjectHideFlags: 0
