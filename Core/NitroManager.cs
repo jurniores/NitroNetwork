@@ -31,7 +31,6 @@ namespace NitroNetwork.Core
     [RequireComponent(typeof(LiteTransporter))]
     public class NitroManager : MonoBehaviour
     {
-
         internal static NitroBufferPool bufferPool; // Pool for NitroBuffer objects
         public Dictionary<string, NitroIdentity> nitroPrefabsDic = new(); // Prefab lookup by name
         public Dictionary<int, NitroConn> peers = new(); // Connected peers by ID
@@ -47,10 +46,9 @@ namespace NitroNetwork.Core
         internal static NitroManager Instance; // Singleton instance
         [Header("Config Connection")]
         public bool ConnectInLan = false; // LAN mode flag
-        [SerializeField, HideIf(nameof(ConnectInLan))]
-        private string address = "127.0.0.1"; // Default server address
-        [SerializeField]
-        private int port = 7778; // Default server port
+        [HideIf(nameof(ConnectInLan))]
+        public string address = "127.0.0.1"; // Default server address
+        public int port = 7778; // Default server port
         public static NitroConn ClientConn, ServerConn; // Static references to client/server connections
         private Transporter transporter; // Network transporter component
         internal bool IsServer, IsClient; // Flags for server/client mode
@@ -71,23 +69,30 @@ namespace NitroNetwork.Core
         public static Action<NitroConn> OnConnectConn, OnDisconnectConn; // Connection event callbacks
         public static Action<int> OnPingClient; // Ping event callback
         public static Action<NitroBandWidth> OnBandWidth; // Bandwidth event callbacks
-        public static Action OnClientConnected, OnServerConnected; // Client connection event callback
+        public static Action OnClientConnected, OnServerConnected, OnDisconnectInstance; // Client connection event callback
         /// <summary>
         /// Unity Awake lifecycle method.
         /// Initializes the NitroManager, registers RPCs, sets up the transporter, and generates encryption keys.
         /// </summary>
         private async void Awake()
         {
+            if (FindAnyObjectByType<NitroConnect>())
+            {
+                Client = false;
+                Server = false;
+            }
             OnConnectConn = null;
             OnClientConnected = null;
             OnServerConnected = null;
             OnDisconnectConn = null;
             OnBandWidth = null;
             OnPingClient = null;
+            OnDisconnectInstance = null;
 
             ServerConn = null;
             ClientConn = null;
             bufferPool = new NitroBufferPool(32000);
+
             Instance = this;
             // Register default RPCs for server and client
             RpcsServer.Add(((int)NitroCommands.GetConnection, (byte)NitroCommands.SendAES), ReceiveKeyAesServerRPC);
@@ -188,6 +193,7 @@ namespace NitroNetwork.Core
         {
             Instance.transporter.ServerConnect("127.0.0.1", port);
             Instance.IsServer = true;
+            Instance.Server = true;
         }
 
         /// <summary>
@@ -196,6 +202,7 @@ namespace NitroNetwork.Core
         public static void ConnectClient(string address, int port)
         {
             Instance.transporter.ClientConnect(address, port);
+            Instance.IsClient = true;
         }
 
         /// <summary>
@@ -213,6 +220,25 @@ namespace NitroNetwork.Core
         {
             Instance.transporter.DisconnectServer();
             Instance.transporter.DisconnectClient();
+            OnDisconnectInstance?.Invoke();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance != null)
+            {
+                OnConnectConn = null;
+                OnClientConnected = null;
+                OnServerConnected = null;
+                OnDisconnectConn = null;
+                OnBandWidth = null;
+                OnPingClient = null;
+                OnDisconnectInstance = null;
+
+                ServerConn = null;
+                ClientConn = null;
+                // Outros eventos que precisam ser desregistrados
+            }
         }
 
         /// <summary>
@@ -375,6 +401,7 @@ namespace NitroNetwork.Core
             }
             else if (IsClient)
             {
+                OnDisconnectInstance?.Invoke();
                 Debug.Log($"Disconnected Peer");
             }
         }
@@ -421,7 +448,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Retrieves a room by its ID.
         /// </summary>
-         public static NitroRoom GetRoom(string roomId)
+        public static NitroRoom GetRoom(string roomId)
         {
             return Instance.rooms.TryGetValue(roomId, out var room) ? room : null;
         }
@@ -794,7 +821,7 @@ namespace NitroNetwork.Core
             Send(conn, bufferSend.Buffer, DeliveryMode.ReliableOrdered, 0);
             firstRoom.JoinRoom(conn);
             OnConnectConn?.Invoke(conn);
-            
+
             Debug.Log($"Peer {conn.Id} connected to server {conn.iPEndPoint.Address}:{conn.iPEndPoint.Port}");
         }
         internal static int GetMyPing(NitroConn conn)

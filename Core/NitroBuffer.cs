@@ -249,7 +249,6 @@ namespace NitroNetwork.Core
         /// <exception cref="FormatException">Thrown when the record separator is not found.</exception>
         private T ReadClass<T>()
         {
-            NitroLogs.Log($"Reading class {typeof(T).Name} from buffer at position {tam}");
             Span<byte> bSpan = buffer.AsSpan(tam);
 
             ushort size = (ushort)((bSpan[0] & 0xFF) | ((bSpan[1] & 0xFF) << 8));
@@ -333,16 +332,16 @@ namespace NitroNetwork.Core
             tam = 4;
             WriteForRead(bytes);
         }
-        public AesResult EncriptAes(byte[] key)
+        public AesResult EncriptAes(byte[] key, int pos = 4)
         {
-            var result = NitroCriptografyAES.Encrypt(buffer.AsSpan(4, tam - 4).ToArray(), key);
-            result.IV.CopyTo(buffer.AsSpan(4, result.IV.Length));
-            tam = 4 + result.IV.Length;
+            var result = NitroCriptografyAES.Encrypt(buffer.AsSpan(pos, tam - pos).ToArray(), key);
+            result.IV.CopyTo(buffer.AsSpan(pos, result.IV.Length));
+            tam = pos + result.IV.Length;
             result.EncryptedData.CopyTo(buffer.AsSpan(tam, result.EncryptedData.Length));
             tam += result.EncryptedData.Length;
             return result;
         }
-        public bool DecryptAes(byte[] key)
+        public bool DecryptAes(byte[] key, int pos = 4)
         {
             try
             {
@@ -357,7 +356,7 @@ namespace NitroNetwork.Core
                 };
 
                 var bufferDecript = NitroCriptografyAES.Decrypt(aesResult.EncryptedData, key, aesResult.IV);
-                bufferDecript.CopyTo(buffer.AsSpan(4, bufferDecript.Length));
+                bufferDecript.CopyTo(buffer.AsSpan(pos, bufferDecript.Length));
                 return true;
 
             }

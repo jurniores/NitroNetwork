@@ -74,7 +74,7 @@ namespace NitroNetwork.Core
                     SimulationMaxLatency = maxLatence,
                     SimulatePacketLoss = SimulatePacketLoss,
                     SimulationPacketLossChance = SimulationPacketLossChance
-                    
+
                 };
                 _netServer.Start(port);
 

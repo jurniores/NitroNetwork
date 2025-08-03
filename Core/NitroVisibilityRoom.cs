@@ -20,17 +20,17 @@ public partial class NitroVisibilityRoom : NitroBehaviour
         if (room == null)
         {
             room = NitroManager.CreateRoom(RoomId);
-            if (!Identity.conn.rooms.ContainsKey(RoomId))
+            if (!Identity.Owner.rooms.ContainsKey(RoomId))
             {
-                room.JoinRoom(Identity.conn);
+                room.JoinRoom(Identity.Owner);
             }
             room.AddIdentity(Identity);
         }
         else
         {
-            if (!Identity.conn.rooms.ContainsKey(RoomId))
+            if (!Identity.Owner.rooms.ContainsKey(RoomId))
             {
-                room.JoinRoom(Identity.conn);
+                room.JoinRoom(Identity.Owner);
             }
             room.AddIdentity(Identity);
         }
@@ -43,7 +43,7 @@ public partial class NitroVisibilityRoom : NitroBehaviour
             if (room != null)
             {
                 room?.identities.Remove(Identity.Id);
-                Identity.conn.AddIdentityVisibility(room, -1);
+                Identity.Owner.AddIdentityVisibility(room, -1);
             }
         }
     }

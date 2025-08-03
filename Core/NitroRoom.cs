@@ -79,7 +79,7 @@ namespace NitroNetwork.Core
                 for (int i = 0; i < identities.Count; i++)
                 {
                     var identity = identities.ElementAt(i);
-                    if (identity.Value.conn.Id == conn.Id)
+                    if (identity.Value.Owner.Id == conn.Id)
                     {
                         identity.Value.Destroy();
                         identities.Remove(identity.Key);
@@ -121,22 +121,22 @@ namespace NitroNetwork.Core
         /// <returns>True if the identity was added, false otherwise.</returns>
         public bool AddIdentity(NitroIdentity identity)
         {
-            if (identity.conn.Id != NitroManager.ServerConn.Id && !peersRoom.ContainsKey(identity.conn.Id))
+            if (identity.Owner.Id != NitroManager.ServerConn.Id && !peersRoom.ContainsKey(identity.Owner.Id))
             {
-                NitroLogs.LogError($"Peer {identity.conn.Id} not in room {Name}");
+                NitroLogs.LogError($"Peer {identity.Owner.Id} not in room {Name}");
                 return false;
             }
             if (!identities.ContainsKey(identity.Id))
             {
                 if (identity.room != null)
                 {
-                    identity.SendDestroyForClient(identity.conn, newRoom: this, Target: Target.ExceptSelf);
+                    identity.SendDestroyForClient(identity.Owner, newRoom: this, Target: Target.ExceptSelf);
                     identity.room.identities.Remove(identity.Id);
-                    identity.conn.AddIdentityVisibility(identity.room, -1);
+                    identity.Owner.AddIdentityVisibility(identity.room, -1);
                 }
                 identity.SetRoom(this);
-                identity.SendSpawnForClient(identity.conn, newRoom: this, Target: Target.ExceptSelf);
-                identity.conn.AddIdentityVisibility(this, 1);
+                identity.SendSpawnForClient(identity.Owner, newRoom: this, Target: Target.ExceptSelf);
+                identity.Owner.AddIdentityVisibility(this, 1);
                 identities.Add(identity.Id, identity);
                 return true;
             }

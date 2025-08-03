@@ -25,7 +25,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// Gets the NitroIdentity associated with this behaviour.
         /// /// </summary>
-        protected NitroConn Conn => Identity != null ? Identity.conn : null;
+        protected NitroConn Conn => Identity != null ? Identity.Owner : null;
         /// <summary>
         /// Gets the NitroConn used for calling RPCs on this behaviour.
         /// /// </summary>
@@ -102,7 +102,7 @@ namespace NitroNetwork.Core
                 }
             }
             NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, Target: Target, DeliveryMode: DeliveryMode, channel: channel);
-            Identity.callConn = Identity.conn;
+            Identity.callConn = Identity.Owner;
         }
         /// <summary>
         /// Delta function for Vector3. It compares the delta with a reference vector and returns a byte array.
@@ -546,8 +546,8 @@ namespace NitroNetwork.Core
         /// <param name="message">The message to log.</param>
         protected bool __ReturnValidateServerCall(string nameMethod)
         {
-            if (IsClient && !IsStatic) { throw new($"RPC {nameMethod} cannot be called on the client."); }
-            if (Identity == null) throw new($"RPC {nameMethod}: Identity does not exist, insert the NetworkIdentity, or check if the identity exists");
+            if (IsClient && !IsServer) { Debug.LogError($"RPC {nameMethod} cannot be called on the client."); return false; }
+            if (Identity == null) { Debug.LogError($"RPC {nameMethod}: Identity does not exist, insert the NetworkIdentity, or check if the identity exists"); return false; }
             return true;
         }
         /// <summary>
@@ -555,9 +555,10 @@ namespace NitroNetwork.Core
         /// </summary>
         protected bool __ReturnValidateClientCall(string nameMethod)
         {
-            if (IsServer && !IsStatic) throw new($"RPC {nameMethod} cannot be called on the server.");
-            if (Identity == null) throw new($"RPC {nameMethod}: Identity does not exist, insert the NetworkIdentity, or check if the identity exists");
-            if (!IsClient) { throw new($"RPC {nameMethod}You cannot send a message before the client connects. Use NitroManager.OnClientConnected"); }
+            if (IsServer && !IsClient) {Debug.LogError($"RPC {nameMethod} cannot be called on the server."); return false; }
+            if (Identity == null) { Debug.LogError($"RPC {nameMethod}: Identity does not exist, insert the NetworkIdentity, or check if the identity exists"); return false; }
+            if (!IsClient) { Debug.LogError($"RPC {nameMethod}You cannot send a message before the client connects. Use NitroManager.OnClientConnected"); return false;
+            }
             return true;
         }
         /// <summary>
@@ -573,9 +574,11 @@ namespace NitroNetwork.Core
         /// </summary>
         protected bool __ReturnValidateServerReceived(bool requiresOwner, string nameMethod)
         {
-            if (requiresOwner && !Identity.IsStatic && Identity.conn.Id != Identity.callConn.Id)
+            if (requiresOwner && !Identity.IsStatic && Identity.Owner.Id != Identity.callConn.Id)
             {
-                throw new($"Access denied RPC {nameMethod}: requiresOwner is true, and the connection does not match the object's spawn connection. Identity: " + Identity.Id + " Rpc: {method.Identifier.Text} Class: {classe.Identifier.Text}");
+                NitroManager.DisconnectConn(Identity.callConn);
+                Debug.LogError($"Access denied RPC {nameMethod}: requiresOwner is true, and the connection does not match the object's spawn connection. Identity: " + Identity.Id+ " Conn " + Identity.Owner.Id);
+                return false;
             }
             return true;
         }

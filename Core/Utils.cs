@@ -31,7 +31,9 @@ namespace NitroNetwork.Core
         Connected          = 252,
         SpawnRPC           = 251,
         DespawnIdentity    = 250,
-        Ping               = 249,     
+        Ping               = 249, 
+        NetVar             = 248,
+            
 
     }
     public class AesResult

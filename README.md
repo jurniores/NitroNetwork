@@ -147,6 +147,58 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 | `encrypt`   | `bool`          | `false`                         | If `true` and `Server`, the message is encrypted with the client's AES key. If `Client`, it is encrypted with the server's public key. For increased security and to avoid `MITM` attacks, use `Target.Self`, the server will encrypt with the client's key and send only to that client. |
 
 ---
+## 🧩 NitroVar: Gerenciamento de Variáveis Sincronizadas
+
+`NitroVar` is a class designed to manage synchronized variables over the network. It allows you to dynamically set and get values, ensuring that changes are propagated to all connected clients.
+
+### ✅ Example Usage of Netorwk Variable
+
+```csharp
+using NitroNetwork.Core;
+using UnityEngine;
+
+public partial class MyNetworkScript : NitroBehaviour
+{
+    //Simple configuration
+    private NitroVar<int> health = new NitroVar<int>();
+    //Another way, changing the network settings in the constructor
+    private NitroVar<string> playerName = new(
+        clientAuthority: false, 
+        requiresOwner: false, 
+        target: Target.All, 
+        deliveryMode: DeliveryMode.ReliableOrdered, 
+        channel: 1, 
+        encrypt: true, 
+        action: OnPlayerNameChanged
+    );
+    void Start()
+    {
+        health.OnChange += OnHealthChanged;
+    }
+
+    void Update()
+    {
+        if (IsClient && Input.GetKeyDown(KeyCode.Space))
+        {
+            
+            //For static identities, use the Send method instead of assigning directly
+            //health.Send(IsServer, 1); TRUE for server-to-client sends, FALSE for client-to-server sends          
+            health.Value =  1;
+        }
+         if (IsClient && Input.GetKeyDown(KeyCode.N))
+        {
+            playerName.Value = "My Name";
+        }
+    }
+    static void OnPlayerNameChanged(string name){
+        
+        Debug.Log("Name: "+ name);
+    }
+    private void OnHealthChanged(int newHealth)
+    {
+        Debug.Log($"Health atualizado: {newHealth}");
+    }
+}
 
 ### 🧪 Example: Using NitroRPC
 ```csharp
@@ -359,6 +411,17 @@ public partial class ConnectPeers : NitroBehaviour
     {
         var prefab = NitroManager.GetPrefab("Player");
         NitroIdentity identity = prefab.Spawn(Identity.callConn);
+    }
+    
+    /// <summary>
+    /// You can also retrieve the client's connection by adding the NitroConn parameter to the method
+    /// The nitroConn parameter must always be the last parameter
+    /// </summary>
+    [NitroRPC(Server)]
+    void SpawnServerConn(string namePlayer, NitroConn conn)
+    {
+        var prefab = NitroManager.GetPrefab("Player");
+        NitroIdentity identity = prefab.Spawn(conn);
     }
 
     /// <summary>

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Diagnostics;
 
@@ -15,13 +17,14 @@ namespace NitroNetwork.Core
     public class NitroIdentity : MonoBehaviour
     {
         // Connections associated with this identity
-        public NitroConn conn, callConn;
+        public NitroConn Owner, callConn;
         // Room associated with this identity
         public NitroRoom room;
         // Dictionaries for storing server and client RPCs
         public Dictionary<int, Action<NitroBuffer>> RpcServer = new(), RpcClient = new();
         // Array of child behaviors associated with this identity
         public Dictionary<string, NitroBehaviour> behaviours = new();
+        public Dictionary<byte, INitroVar> vars = new();
         // Indicates if the identity is static (does not change during execution)
         [HideInInspector]
         public bool IsStatic = false;
@@ -47,6 +50,9 @@ namespace NitroNetwork.Core
         /// </summary>
         void Awake()
         {
+            RpcServer.Add(248, OnNetVar); // Registers the RPC for network variable updates
+            RpcClient.Add(248, OnNetVar); // Registers the RPC for network variable updates
+            RpcServer.TryAdd((int)NitroCommands.SpawnRPC, OnInstantiated); // Registers the spawn RPC for server
             if (NitroManager.Instance.Client && NitroManager.Instance.Server && Hide)
             {
                 if (IsServer) DisableAllVisualComponents();
@@ -58,6 +64,18 @@ namespace NitroNetwork.Core
 
             foreach (var nb in behaviours.Values)
             {
+                byte count = 0;
+                foreach (var field in nb.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                {
+                    var fieldValue = field.GetValue(nb);
+
+                    if (fieldValue is INitroVar nitroVar)
+                    {
+                        nitroVar.SetConfig(count, this);
+                        vars[count] = nitroVar;
+                        count++;
+                    }
+                }
                 nb.__RegisterMyRpcServer(RpcServer);
                 nb.__RegisterMyRpcClient(RpcClient);
             }
@@ -90,6 +108,15 @@ namespace NitroNetwork.Core
             }
         }
 
+        void OnNetVar(NitroBuffer buffer)
+        {
+            byte id = buffer.Read<byte>();
+            if (vars.TryGetValue(id, out INitroVar nitroVar))
+            {
+                nitroVar.ReadVar(buffer);
+            }
+        }
+
         /// <summary>
         /// Sets the room associated with this identity.
         /// </summary>
@@ -111,6 +138,13 @@ namespace NitroNetwork.Core
             {
                 nb.SetConfigs(this, IsServer, IsClient, IsMine);
             }
+            if (IsStatic && IsClient)
+            {
+                using var buffer = NitroManager.Rent();
+                buffer.SetInfo((byte)NitroCommands.SpawnRPC, Id);
+                NitroManager.SendForServer(buffer.Buffer);
+            }
+
         }
 
         /// <summary>
@@ -139,7 +173,7 @@ namespace NitroNetwork.Core
         internal void SetConfig(NitroConn conn, int id, bool isServer, bool isClient, bool isMine)
         {
             Id = id;
-            this.conn = conn;
+            this.Owner = conn;
             IsServer = isServer;
             IsClient = isClient;
             IsMine = isMine;
@@ -152,11 +186,15 @@ namespace NitroNetwork.Core
         /// </summary>
         internal void OnInstantiated(NitroBuffer buffer)
         {
+            foreach (var nitroVar in vars.Values)
+            {
+                nitroVar.Send(Target.Self, callConn);
+            }
             foreach (var nb in behaviours.Values)
             {
                 nb.OnInstantiated();
             }
-            callConn = conn;
+            callConn = Owner;
         }
 
         /// <summary>
@@ -169,7 +207,7 @@ namespace NitroNetwork.Core
         {
             conn ??= NitroManager.ServerConn; // Gets the connection if not specified
             var newRoom = room ?? NitroManager.GetFirstRoom(); // Gets the room if not specified
-            
+
             // Checks if the connection is in the room
             if (conn.Id != NitroManager.ServerConn.Id && !conn.rooms.ContainsKey(newRoom.Name))
             {
@@ -181,8 +219,8 @@ namespace NitroNetwork.Core
             var newIdentity = Instantiate(this); // Instantiates a new identity
             // Configures the buffer for the spawn RPC
             Id = newIdentity.Id;
-            this.conn = conn;
-            newIdentity.conn = conn;
+            this.Owner = conn;
+            newIdentity.Owner = conn;
             newIdentity.callConn = conn;
             newIdentity.IsServer = true;
             newIdentity.namePrefab = name;
@@ -210,7 +248,7 @@ namespace NitroNetwork.Core
             using var buffer = NitroManager.Rent();
             buffer.SetInfo((byte)NitroCommands.SpawnRPC, (int)NitroCommands.ConfigsManager);
             buffer.Write(this.Id);
-            buffer.Write(this.conn.Id);
+            buffer.Write(this.Owner.Id);
             buffer.Write(SpawnInParent);
             buffer.Write(namePrefab);
             buffer.Write(transform.position);
@@ -239,7 +277,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public void Destroy()
         {
-            SendDestroyForClient(conn);
+            SendDestroyForClient(Owner);
             Destroy(gameObject);
         }
 
@@ -258,7 +296,7 @@ namespace NitroNetwork.Core
             {
                 NitroManager.UnRegisterIdentity(this);
                 room?.identities.Remove(Id);
-                conn?.identities.Remove(Id);
+                Owner?.identities.Remove(Id);
                 RpcServer.Clear();
             }
         }
