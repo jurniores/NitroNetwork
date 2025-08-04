@@ -534,7 +534,7 @@ namespace NitroNetwork.Core
                     action?.Invoke(buffer, conn);
                     return;
                 }
-
+                
                 identitiesServer.TryGetValue(identityId, out var identity);
 
                 if (identity != null)
@@ -557,6 +557,7 @@ namespace NitroNetwork.Core
 
                 if (identity != null)
                 {
+                    identity.callConn = ServerConn;
                     identity.RpcClient[id]?.Invoke(buffer);
                 }
             }

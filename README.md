@@ -150,6 +150,7 @@ The `[NitroRPC]` attribute is used to define methods that can be executed remote
 ## 🧩 NitroVar: Gerenciamento de Variáveis Sincronizadas
 
 `NitroVar` is a class designed to manage synchronized variables over the network. It allows you to dynamically set and get values, ensuring that changes are propagated to all connected clients.
+Unlike RPC in self mode for the client, it does not encrypt with each client's key, only with the server's AES encryption. Therefore, for maximum security, prefer using RPC.
 
 ### ✅ Example Usage of Netorwk Variable
 
@@ -163,17 +164,21 @@ public partial class MyNetworkScript : NitroBehaviour
     private NitroVar<int> health = new NitroVar<int>();
     //Another way, changing the network settings in the constructor
     private NitroVar<string> playerName = new(
-        clientAuthority: false, 
-        requiresOwner: false, 
-        target: Target.All, 
-        deliveryMode: DeliveryMode.ReliableOrdered, 
-        channel: 1, 
-        encrypt: true, 
-        action: OnPlayerNameChanged
+            initialValue: "Value Initial", // Initial Value
+            reply: true, // Replies the message to other clients, only works when called from the client
+            clientAuthority: true, // Grants authority for the client to send
+            requiresOwner: false, // Allows others to call without being the owner
+            target: Target.All, // Selects the type of delivery
+            deliveryMode: DeliveryMode.ReliableOrdered, // Selects the delivery mode
+            channel: 1, // Selects the channel to be used, default is 0
+            encrypt: true, // Encrypts the message
+            action: OnPlayerNameChanged // Listener method for message change
     );
     void Start()
     {
         health.OnChange += OnHealthChanged;
+        //Caso não queira sincronizar, use o 
+        health.value = "No Sync";
     }
 
     void Update()
@@ -190,13 +195,19 @@ public partial class MyNetworkScript : NitroBehaviour
             playerName.Value = "My Name";
         }
     }
-    static void OnPlayerNameChanged(string name){
-        
-        Debug.Log("Name: "+ name);
-    }
-    private void OnHealthChanged(int newHealth)
+    static void OnPlayerNameChanged(string oldValue, string newValue, NitroConn conn)
     {
-        Debug.Log($"Health atualizado: {newHealth}");
+        //If you want to make comparisons in static identities to determine whether the server or the client is receiving the message, you can simply use a condition like this:
+        //If the ID of the message recipient is equal to the server's ID, then the client is the one receiving the message
+
+        if (conn.Id == NitroManager.ServerConn.Id) print("IsClient");
+        else print("IsServer");
+        
+        Debug.Log("OldName: "+ oldValue +" newName "+ newValue);
+    }
+    private void OnHealthChanged(int oldHealth, int newHealth, NitroConn conn)
+    {
+        Debug.Log($"old: {oldHealth} new: {newHealth}");
     }
 }
 
@@ -331,7 +342,7 @@ Below are the key properties available in the `NitroIdentity` component:
 | Property       | Type            | Description                                                     |
 |----------------|-----------------|-----------------------------------------------------------------|
 | `Id`           | `int`           | Unique identifier for this object across the network. For static identities, this ID must be manually assigned |
-| `conn`         | `NitroConn`     | The connection that owns this identity (null for static objects)|
+| `Owner`         | `NitroConn`     | The connection that owns this identity (null for static objects)|
 | `IsStatic`     | `bool`          | Whether this identity is static (pre-existing in scene)         |
 | `IsServer`     | `bool`          | True if this identity is running on the server                  |
 | `IsClient`     | `bool`          | True if this identity is running on a client                    |
