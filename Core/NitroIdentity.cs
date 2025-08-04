@@ -277,7 +277,6 @@ namespace NitroNetwork.Core
         /// </summary>
         public void Destroy()
         {
-            SendDestroyForClient(Owner);
             Destroy(gameObject);
         }
 
@@ -294,6 +293,7 @@ namespace NitroNetwork.Core
             }
             else
             {
+                SendDestroyForClient(Owner);
                 NitroManager.UnRegisterIdentity(this);
                 room?.identities.Remove(Id);
                 Owner?.identities.Remove(Id);

@@ -472,7 +472,7 @@ namespace NitroNetwork.Core
         /// </summary>
         internal static void Send(NitroConn conn, Span<byte> message, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0, bool IsServer = true)
         {
-            if (IsServer && conn.Id == ServerConn.Id) return;
+            if (ServerConn == null || IsServer && conn.Id == ServerConn.Id) return;
             Instance.transporter.Send(conn.Id, message, DeliveryMode, channel, IsServer);
         }
 
