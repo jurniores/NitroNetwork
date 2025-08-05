@@ -106,6 +106,10 @@ namespace NitroNetwork.Core
             {
                 canvas.enabled = false;
             }
+            foreach (var audioSource in GetComponentsInChildren<AudioSource>(true))
+            {
+                audioSource.enabled = false;
+            }
         }
 
         void OnNetVar(NitroBuffer buffer)

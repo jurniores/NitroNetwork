@@ -21,7 +21,7 @@ namespace NitroNetwork.Core
         /// <summary>
         /// The network identity associated with this behaviour.
         /// </summary>
-        protected NitroIdentity Identity;
+        public NitroIdentity Identity;
         /// <summary>
         /// Gets the NitroIdentity associated with this behaviour.
         /// /// </summary>
