@@ -102,7 +102,7 @@ namespace NitroNetwork.Core
                     return;
                 }
             }
-            NitroManager.SendForClient(message, Identity.callConn, room: Identity.room, Target: Target, DeliveryMode: DeliveryMode, channel: channel);
+            NitroManager.SendForClient(message, Identity.Owner, room: Identity.room, Target: Target, DeliveryMode: DeliveryMode, channel: channel);
             Identity.callConn = Identity.Owner;
         }
         /// <summary>
