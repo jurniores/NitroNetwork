@@ -95,6 +95,7 @@ namespace NitroNetwork.Core
             _netClient = new NetManager(this)
             {
                 DisconnectTimeout = disconnectedTimeoutSeconds * 1000,
+                BroadcastReceiveEnabled = true,
                 ChannelsCount = (byte)(channels + 1),
                 SimulateLatency = SimulateLatency,
                 SimulationMinLatency = minLatence,

@@ -5,6 +5,8 @@ using System.Net.Sockets;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Collections;
+using UnityEditor.PackageManager;
+
 
 
 #if UNITY_EDITOR
@@ -273,6 +275,15 @@ namespace NitroNetwork.Core
         {
             if (IsStatic)
             {
+                if (Instance.identitiesServer.ContainsKey(identity.Id))
+                {
+                    throw new Exception("Identity has already been registered as a server.");
+                }
+                if (Instance.identitiesClient.ContainsKey(identity.Id))
+                {
+                    throw new Exception("Identity has already been registered as a client.");
+                }
+
                 Instance.identitiesServer[identity.Id] = identity;
                 Instance.identitiesClient[identity.Id] = identity;
                 return;
@@ -568,7 +579,7 @@ namespace NitroNetwork.Core
         /// </summary>
         public static void SendForClient(Span<byte> message, NitroConn conn, NitroRoom room = null, NitroRoom roomValidate = null, Target Target = Target.All, DeliveryMode DeliveryMode = DeliveryMode.ReliableOrdered, byte channel = 0)
         {
-
+            if (ServerConn == null) return;
             if (Instance.peers.Count == 0)
             {
                 Debug.LogWarning("No peers connected to send messages.");

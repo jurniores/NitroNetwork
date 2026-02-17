@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 namespace NitroNetwork.Core
 {
-
+    [Serializable]
     public class NitroVar<T> : INitroVar
     {
 
@@ -182,7 +182,7 @@ namespace NitroNetwork.Core
             OnChange?.Invoke(value, newValue, Identity.callConn);
             value = newValue;
 
-            if (ClientAuthority && Reply && Identity.callConn.Id != -1)
+            if (ClientAuthority && Reply && Identity.callConn != null && Identity.callConn.Id != -1)
             {
                 if (Encrypt)
                 {

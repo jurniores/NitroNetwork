@@ -30,7 +30,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1476201061895505217}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6351986667323765686
@@ -47,14 +48,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ConnectInLan: 0
   address: 127.0.0.1
-  port: 7778
+  port: 7777
   Server: 1
   Client: 1
-  msgForDisconnectPeer: 0
+  msgForDisconnectPeer: 60
   publicKey: <RSAKeyValue><Modulus>pfLHZC+3zlhe+wNkMOXcX+hEsnQ2yaB/sSLrp+9agV69mc/mQVCa0FNEQ2j2NP6/2SDThqZIiArfZzE858x12xQTSvKDiLNtmXFMdoVifb+ySYcCIU8r/dGw1wX3Vqhtw5B7G6WmNRK2q083uwT0Lze93WnxLSAalyFZ46EawrM=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>
   privateKey: <RSAKeyValue><Modulus>pfLHZC+3zlhe+wNkMOXcX+hEsnQ2yaB/sSLrp+9agV69mc/mQVCa0FNEQ2j2NP6/2SDThqZIiArfZzE858x12xQTSvKDiLNtmXFMdoVifb+ySYcCIU8r/dGw1wX3Vqhtw5B7G6WmNRK2q083uwT0Lze93WnxLSAalyFZ46EawrM=</Modulus><Exponent>AQAB</Exponent><P>3mI6ZovAbgbU9elXCDQO+DkMiFCQ8OJVX/BVW2zKaFTkCRsCgN/pqAMOD66AJIM9xTsEalyJPMUDt6N0C21ntw==</P><Q>vwifuShG8P/XR2xge14MzJ3T6jNxb9lhBsQRNwhIuuxd+kUPOPvB0tpwKOe2RPX4VB9wugzlAWBI3qssuxLk5Q==</Q><DP>Y3rjjx3zLgUGXR9N3JCVJbs3fP81Z1yIPoufU2+eN//Jpr0baJVBy/PZ5W/1SOAg0Mru1bmhdrrXR93punbtjw==</DP><DQ>ELzCschTnt3rkLhwI57z5CGX5ZcoQzJ6i8s17ups5OO8wCa41LdKHh1BYnQaxiP+4+/1QnfKwLoc6FV7D9Dx+Q==</DQ><InverseQ>X8WQKzSaRwoUWrHP6h/YsDeyQQvWlBg1EjGPh9r+c/vuzgKOqnFtlvPWni9E95tzyjCkDIB6s1uaoqJK4jhehQ==</InverseQ><D>QrGfBxnScmC704AabTiEaBsuONZSCpixmRxiv3yH0ESmSMHwVUGy5pUAc2MkyEm2CuqReKUts1dDT/LO+o4Gsx5oNefTs7ObJivjOALfn/E06zdsNLw5bcqGqB8UNFS6fVqbilI0dTYM930H7waZ1rMq2oZPNx0S+yGEphq7R0k=</D></RSAKeyValue>
   usePresetRsaKeys: 0
-  nitroPrefabs: []
+  nitroPrefabs:
+  - {fileID: 6832694885363627320, guid: abe48e6fb167bff4897e7e676d464045, type: 3}
 --- !u!114 &3654692999298581771
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78,3 +80,84 @@ MonoBehaviour:
   minLatence: 0
   maxLatence: 0
   SimulationPacketLossChance: 0
+--- !u!1 &1561623084054163586
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1476201061895505217}
+  - component: {fileID: 3263133800792736492}
+  - component: {fileID: 6518624422610183266}
+  - component: {fileID: 7433464949937345495}
+  m_Layer: 0
+  m_Name: SNTP
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1476201061895505217
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1561623084054163586}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 57.516533, y: 878.4524, z: 0.40480247}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3843690243152686211}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3263133800792736492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1561623084054163586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50c3162772042e14f8a8e5841f9ef418, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsStatic: 0
+  IsServer: 0
+  IsClient: 0
+  IsMine: 0
+  Id: 0
+  SpawnInParent: 1
+  Hide: 0
+--- !u!114 &6518624422610183266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1561623084054163586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6ddbf610627c414ea67b8ded1e95902, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7433464949937345495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1561623084054163586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db9adf0d37aab834a8f1d05601cfb338, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Identity: {fileID: 0}
+  tickRate: 15
+  maxSyncAttempts: 3
+  OnGui: 1
