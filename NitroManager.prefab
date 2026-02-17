@@ -98,7 +98,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1476201061895505217
 Transform:
   m_ObjectHideFlags: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
   IsServer: 0
   IsClient: 0
   IsMine: 0
-  Id: 0
+  Id: -1
   SpawnInParent: 1
   Hide: 0
 --- !u!114 &6518624422610183266
